@@ -16,7 +16,7 @@
       ],
       "expected_behavior": "grounded_answer",
       "notes": "Procedimiento de notificación por correo a alerta-seguridad o ticket de severidad alta.",
-      "human_reviewed": false
+      "human_reviewed": true
     },
     {
       "id": "EVAL-002",
@@ -32,7 +32,7 @@
       ],
       "expected_behavior": "grounded_answer",
       "notes": "Clasificación de incidentes: Severidad 1 exige respuesta en menos de 15 minutos.",
-      "human_reviewed": false
+      "human_reviewed": true
     },
     {
       "id": "EVAL-003",
@@ -48,7 +48,7 @@
       ],
       "expected_behavior": "grounded_answer",
       "notes": "Política de accesos: mínimo 14 caracteres combinando mayúsculas, minúsculas, números y símbolos.",
-      "human_reviewed": false
+      "human_reviewed": true
     },
     {
       "id": "EVAL-004",
@@ -64,7 +64,7 @@
       ],
       "expected_behavior": "grounded_answer",
       "notes": "FAQ interna: contactar a Mesa de Ayuda para validar identidad por videollamada y reiniciar token.",
-      "human_reviewed": false
+      "human_reviewed": true
     },
     {
       "id": "EVAL-005",
@@ -80,7 +80,7 @@
       ],
       "expected_behavior": "grounded_answer",
       "notes": "FAQ interna: lunes a viernes de 08:30 a 18:30 horas.",
-      "human_reviewed": false
+      "human_reviewed": true
     },
     {
       "id": "EVAL-006",

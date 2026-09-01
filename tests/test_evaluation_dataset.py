@@ -169,9 +169,14 @@ def test_draft_dataset_integrity():
     dataset = load_dataset(draft_path)
     assert len(dataset.cases) == 20
 
-    # Ensure all draft cases start as human_reviewed=False
-    for case in dataset.cases:
-        assert case.human_reviewed is False
+    # Ensure draft still contains unreviewed cases overall
+    assert has_unreviewed_cases(dataset) is True
+
+    # Count reviewed vs pending
+    reviewed_cases = [c.id for c in dataset.cases if c.human_reviewed]
+    pending_cases = [c.id for c in dataset.cases if not c.human_reviewed]
+    assert len(reviewed_cases) == 5  # EVAL-001 to EVAL-005 approved
+    assert len(pending_cases) == 15  # EVAL-006 to EVAL-020 pending
 
     # Check categories distribution
     categories = [c.category for c in dataset.cases]
