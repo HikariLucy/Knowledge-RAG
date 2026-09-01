@@ -231,7 +231,11 @@ button, textarea { font: inherit; } button { color: inherit; }
   .pipeline-steps-grid { grid-template-columns: repeat(2,1fr); } .pipe-step-card:nth-child(3) { border-left: 0; border-top: 1px solid var(--rule); } .pipe-step-card:nth-child(4) { border-top: 1px solid var(--rule); } .pipe-step-card:nth-child(2)::after { display: none; }
   .loading-banner { align-items: flex-start; flex-direction: column; } .process-steps { flex-wrap: wrap; } .spinner-track { width: min(100%,210px); }
   .error-banner { flex-wrap: wrap; } .workbench-btn-secondary { margin-left: 38px; }
-  .answer-body { min-height: 0; padding: 20px 14px; background: var(--paper-white); } .answer-text { padding-left: 0; font-size: 14.5px; line-height: 1.7; } .abstention-box { margin-left: 0; padding: 15px; }
+  .answer-column, .answer-card { display: contents; }
+  .result-header { order: 1; border: 1px solid var(--rule-strong); border-top: 3px solid var(--graphite); }
+  .answer-body { order: 2; min-height: 0; padding: 20px 14px; background: var(--paper-white); border-inline: 1px solid var(--rule-strong); }
+  .evidence-column { order: 3; } .traceability-strip { order: 4; } .technical-details { order: 5; border-inline: 1px solid var(--rule-strong); border-bottom: 1px solid var(--rule-strong); }
+  .answer-text { padding-left: 0; font-size: 14.5px; line-height: 1.7; } .abstention-box { margin-left: 0; padding: 15px; }
   .traceability-strip { grid-template-columns: repeat(2,1fr); } .trace-stamp { grid-column: 1/-1; flex-direction: row; align-items: baseline; justify-content: space-between; }
   .trace-item { min-height: 54px; } .trace-item + .trace-item { border-left: 0; } .trace-item:nth-of-type(even) { border-left: 1px solid #465054; } .trace-item:nth-of-type(n+4) { border-top: 1px solid #465054; }
   .technical-summary { padding-inline: 12px; } .technical-body { padding: 12px; } .tech-table { font-size: 9.5px; } .tech-table th, .tech-table td { padding: 6px; }
