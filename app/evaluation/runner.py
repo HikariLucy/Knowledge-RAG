@@ -204,6 +204,7 @@ def run_evaluation(
         timestamp=datetime.now(timezone.utc).isoformat(),
         git_commit=git_commit,
         git_dirty=git_dirty,
+        router_model=cfg.gemini_router_model,
         chat_model=cfg.gemini_chat_model,
         embedding_model=cfg.gemini_embedding_model,
         top_k=k,

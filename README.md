@@ -258,8 +258,9 @@ Parámetros configurables en `.env`:
 - `APP_NAME`: Nombre del servicio (predeterminado: `KnowledgeFlow RAG`).
 - `APP_ENV`: Entorno de ejecución (`development`, `production`).
 - `GEMINI_API_KEY`: Clave de API de Google Gemini (requerida para llamadas reales al modelo y generación).
-- `GEMINI_CHAT_MODEL`: Modelo generativo LLM (predeterminado: `gemini-3.5-flash`; en local se puede utilizar `gemini-2.5-flash` según disponibilidad de cuota).
-- `GEMINI_EMBEDDING_MODEL`: Modelo de embeddings (predeterminado: `gemini-embedding-2`).
+- `GEMINI_ROUTER_MODEL`: Modelo liviano para el agente de enrutamiento (predeterminado: `gemini-3.5-flash-lite`; tarea de clasificación estructurada y enrutamiento semántico).
+- `GEMINI_CHAT_MODEL`: Modelo generativo LLM para RAG y citas (predeterminado: `gemini-3.5-flash`).
+- `GEMINI_EMBEDDING_MODEL`: Modelo de embeddings densos (predeterminado: `gemini-embedding-2`).
 - `CHUNK_SIZE`: Tamaño de segmento en caracteres (predeterminado: `500`).
 - `CHUNK_OVERLAP`: Solapamiento de segmento en caracteres (predeterminado: `50`).
 - `EMBEDDING_DIMENSION`: Dimensionalidad de los vectores densos (predeterminado: `768`).

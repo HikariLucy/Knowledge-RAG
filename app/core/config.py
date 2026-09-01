@@ -15,6 +15,7 @@ class Settings(BaseSettings):
 
     # LLM Provider (Google Gemini)
     gemini_api_key: Optional[str] = None
+    gemini_router_model: str = "gemini-3.5-flash-lite"
     gemini_chat_model: str = "gemini-3.5-flash"
     gemini_embedding_model: str = "gemini-embedding-2"
 

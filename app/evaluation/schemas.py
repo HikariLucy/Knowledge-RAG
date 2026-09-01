@@ -233,6 +233,7 @@ class EvaluationRunMetadata(BaseModel):
     timestamp: str
     git_commit: str
     git_dirty: bool
+    router_model: str
     chat_model: str
     embedding_model: str
     top_k: int

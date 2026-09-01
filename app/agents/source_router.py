@@ -83,7 +83,7 @@ class GeminiSourceRouter(BaseSourceRouter):
             for attempt in range(4):
                 try:
                     response = client.models.generate_content(
-                        model=self.settings.gemini_chat_model,
+                        model=self.settings.gemini_router_model,
                         contents=prompt,
                         config=config,
                     )
