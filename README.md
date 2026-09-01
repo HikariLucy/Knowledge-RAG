@@ -28,7 +28,21 @@ Proveer un motor RAG asistido por LLM capaz de:
 
 ---
 
-## Alcance actual (Fases 0, 1, 2 y 3)
+## Documentación Técnica y Paquete de Entrega
+
+El proyecto cuenta con un paquete integral de documentación técnica, evidencias de calibración, guías de demostración y matrices de trazabilidad:
+
+- **[Arquitectura Técnica del Sistema](docs/architecture/architecture.md)**: Descripción detallada de capas, componentes y modelos desacoplados.
+- **[Diagrama Mermaid de Arquitectura](docs/architecture/architecture.mmd)**: Diagrama modular reutilizable en informes y presentaciones.
+- **[Evidencia Técnica de Implementación y Matriz de Rúbrica](docs/evidence/implementation-evidence.md)**: Mapeo de capacidades (IE1-IE9) contra el código del repositorio.
+- **[Evidencia de Evaluación y Calibración de Umbrales](docs/evidence/evaluation-evidence.md)**: Resultados del barrido paramétrico ($0.50$ a $0.75$), estado de cuota y procedencia del corpus.
+- **[Guía de Demostración en Vivo (Demo Runbook)](docs/evidence/demo-runbook.md)**: Protocolo paso a paso para la presentación en vivo y respaldo offline.
+- **[Estructura del Informe Académico (Report Outline)](docs/report/report-outline.md)**: Esquema de redacción para el informe de 5 páginas.
+- **[Estructura de la Presentación Oral (Presentation Outline)](docs/presentation/presentation-outline.md)**: Propuesta de 8 diapositivas (10 minutos de exposición).
+
+---
+
+## Alcance actual (Fases 0 a 5)
 
 El estado actual del proyecto cubre la **Fundación Técnica**, la **Ingesta Documental**, el **Motor de Embeddings y FAISS**, y la **Generación Grounded con Agente de Enrutamiento**:
 
