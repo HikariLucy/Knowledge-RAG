@@ -2,13 +2,13 @@
 
 import argparse
 import sys
-from typing import Optional
+from typing import List, Optional
 
 from app.core.config import Settings, get_settings
 from app.rag.embeddings import BaseEmbeddings, GeminiEmbeddings
 from app.rag.retriever import Retriever
-from app.rag.schemas import SourceType
-from app.rag.vectorstore import VectorStore
+from app.rag.schemas import SearchResult, SourceType
+from app.rag.vectorstore import VectorStore, verify_index_freshness
 
 
 def run_search(
@@ -16,9 +16,11 @@ def run_search(
     k: int = 4,
     source_type: Optional[SourceType] = None,
     vectorstore_dir: Optional[str] = None,
+    knowledge_dir: str = "knowledge",
     embeddings_provider: Optional[BaseEmbeddings] = None,
     settings: Optional[Settings] = None,
-) -> None:
+    enforce_freshness: bool = True,
+) -> List[SearchResult]:
     """Execute search query against persisted vector store and print formatted results.
 
     Args:
@@ -26,8 +28,13 @@ def run_search(
         k: Number of Top-K results.
         source_type: Optional filter ('internal' or 'external').
         vectorstore_dir: Path to directory containing saved index.
+        knowledge_dir: Path to directory with knowledge base documents.
         embeddings_provider: Custom embeddings provider (defaults to GeminiEmbeddings).
         settings: Application settings.
+        enforce_freshness: If True, validates index fingerprint against current corpus.
+
+    Returns:
+        List of SearchResult objects retrieved.
     """
     cfg = settings or get_settings()
     vdir = vectorstore_dir or cfg.vectorstore_dir
@@ -40,6 +47,19 @@ def run_search(
             file=sys.stderr,
         )
         sys.exit(1)
+
+    # 1. Validate index freshness against current corpus and configuration
+    if enforce_freshness:
+        if not vectorstore.manifest or not verify_index_freshness(
+            vectorstore.manifest,
+            knowledge_dir=knowledge_dir,
+            settings=cfg,
+        ):
+            print(
+                "Error: Vector index is stale. Re-run: python -m app.rag.indexer",
+                file=sys.stderr,
+            )
+            sys.exit(1)
 
     provider = embeddings_provider or GeminiEmbeddings(settings=cfg)
     retriever = Retriever(
@@ -59,7 +79,7 @@ def run_search(
 
     if not results:
         print("No matching documents found.")
-        return
+        return results
 
     for res in results:
         meta = res.document.metadata or {}
@@ -75,6 +95,8 @@ def run_search(
         if meta.get("page") is not None:
             print(f"    Page:        {meta.get('page')}")
         print(f"    Text Preview:\n      {snippet}\n")
+
+    return results
 
 
 def main() -> None:
@@ -109,6 +131,13 @@ def main() -> None:
         default=None,
         help="Custom vector store directory (default: from config)",
     )
+    parser.add_argument(
+        "-d",
+        "--knowledge-dir",
+        type=str,
+        default="knowledge",
+        help="Knowledge base directory to verify freshness against (default: 'knowledge')",
+    )
 
     args = parser.parse_args()
 
@@ -118,6 +147,7 @@ def main() -> None:
             k=args.top_k,
             source_type=args.source_type,
             vectorstore_dir=args.vectorstore_dir,
+            knowledge_dir=args.knowledge_dir,
         )
     except Exception as e:
         print(f"Error during search: {e}", file=sys.stderr)

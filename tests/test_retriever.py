@@ -120,3 +120,44 @@ def test_retriever_filter_external_only(retriever_fixture):
     assert len(results) == 2
     for r in results:
         assert r.document.metadata["source_type"] == "external"
+
+
+def test_run_search_aborts_on_stale_index(tmp_path):
+    """Verify run_search aborts with exit code 1 when vectorstore is stale."""
+    from app.rag.search import run_search
+
+    # Create dummy knowledge dir
+    kb_dir = tmp_path / "kb"
+    internal_dir = kb_dir / "internal"
+    internal_dir.mkdir(parents=True)
+    doc_file = internal_dir / "doc.txt"
+    doc_file.write_text("Contenido inicial para indexar.", encoding="utf-8")
+
+    # Create index in tmp dir
+    from app.rag.loaders import load_knowledge_base
+    from app.rag.chunking import split_documents
+
+    settings = Settings()
+    docs = load_knowledge_base(str(kb_dir))
+    chunks = split_documents(docs, chunk_size=settings.chunk_size, chunk_overlap=settings.chunk_overlap)
+    provider = DeterministicFakeEmbeddings(768)
+    embeddings = provider.embed_documents(chunks)
+    vs = VectorStore.from_documents(chunks, embeddings, settings=settings)
+    vs_dir = tmp_path / "vs"
+    vs.save_local(vs_dir)
+
+    # Modify knowledge dir file to make index stale
+    doc_file.write_text("Texto completamente diferente posterior.", encoding="utf-8")
+
+    # run_search should abort via sys.exit(1)
+    with pytest.raises(SystemExit) as exc_info:
+        run_search(
+            query="test",
+            k=2,
+            vectorstore_dir=str(vs_dir),
+            knowledge_dir=str(kb_dir),
+            embeddings_provider=provider,
+            settings=settings,
+            enforce_freshness=True,
+        )
+    assert exc_info.value.code == 1

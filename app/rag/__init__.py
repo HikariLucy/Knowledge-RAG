@@ -27,6 +27,7 @@ from app.rag.vectorstore import (
     VectorStore,
     compute_index_fingerprint,
     validate_index_fingerprint,
+    verify_index_freshness,
 )
 
 __all__ = [
@@ -50,5 +51,6 @@ __all__ = [
     "VectorStore",
     "compute_index_fingerprint",
     "validate_index_fingerprint",
+    "verify_index_freshness",
     "Retriever",
 ]

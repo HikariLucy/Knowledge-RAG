@@ -4,6 +4,7 @@ import json
 from pathlib import Path
 import pytest
 from langchain_core.documents import Document
+import faiss
 
 from app.core.config import Settings
 from app.rag.embeddings import DeterministicFakeEmbeddings
@@ -11,6 +12,7 @@ from app.rag.vectorstore import (
     VectorStore,
     compute_index_fingerprint,
     validate_index_fingerprint,
+    verify_index_freshness,
 )
 
 
@@ -246,6 +248,49 @@ def test_save_and_load_local_preserves_results(
         assert r1.document.metadata == r2.document.metadata
 
 
+def test_load_local_dimension_mismatch_raises(
+    sample_documents, fake_embeddings_provider, tmp_path
+):
+    """Verify load_local raises ValueError when FAISS index dimension mismatches manifest."""
+    embeddings = fake_embeddings_provider.embed_documents(sample_documents)
+    vs = VectorStore.from_documents(sample_documents, embeddings)
+    save_dir = tmp_path / "mismatch_vectorstore"
+    vs.save_local(save_dir)
+
+    # Corrupt manifest dimension in documents.json
+    docs_file = save_dir / "documents.json"
+    with open(docs_file, "r", encoding="utf-8") as f:
+        data = json.load(f)
+    data["embedding_dimension"] = 1536
+    with open(docs_file, "w", encoding="utf-8") as f:
+        json.dump(data, f)
+
+    with pytest.raises(ValueError, match="FAISS index dimension .* does not match manifest"):
+        VectorStore.load_local(save_dir)
+
+
+def test_load_local_document_count_mismatch_raises(
+    sample_documents, fake_embeddings_provider, tmp_path
+):
+    """Verify load_local raises ValueError when FAISS vector count mismatches document count."""
+    embeddings = fake_embeddings_provider.embed_documents(sample_documents)
+    vs = VectorStore.from_documents(sample_documents, embeddings)
+    save_dir = tmp_path / "count_mismatch_vectorstore"
+    vs.save_local(save_dir)
+
+    # Remove one document from documents.json
+    docs_file = save_dir / "documents.json"
+    with open(docs_file, "r", encoding="utf-8") as f:
+        data = json.load(f)
+    data["documents"].pop()
+    data["total_documents"] = len(data["documents"])
+    with open(docs_file, "w", encoding="utf-8") as f:
+        json.dump(data, f)
+
+    with pytest.raises(ValueError, match="Index vector count .* does not match document count"):
+        VectorStore.load_local(save_dir)
+
+
 def test_fingerprint_deterministic_and_independent_of_vectors(
     sample_documents,
 ):
@@ -263,44 +308,80 @@ def test_fingerprint_deterministic_and_independent_of_vectors(
     assert len(fp1) == 64  # SHA-256 hex length
 
 
-def test_fingerprint_detects_document_modification(sample_documents):
-    """Verify fingerprint changes when document content or metadata changes."""
-    settings = Settings()
-    original_fp = compute_index_fingerprint(sample_documents, settings)
-
-    modified_docs = [
-        Document(
-            page_content="Contenido modificado",
-            metadata=sample_documents[0].metadata.copy(),
-        )
-    ] + sample_documents[1:]
-
-    modified_fp = compute_index_fingerprint(modified_docs, settings)
-    assert original_fp != modified_fp
-
-
-def test_fingerprint_detects_config_modification(sample_documents):
-    """Verify fingerprint changes when chunk size or embedding dimension changes."""
-    settings_a = Settings(chunk_size=500, embedding_dimension=768)
-    settings_b = Settings(chunk_size=1000, embedding_dimension=768)
-    settings_c = Settings(chunk_size=500, embedding_dimension=1536)
-
-    fp_a = compute_index_fingerprint(sample_documents, settings_a)
-    fp_b = compute_index_fingerprint(sample_documents, settings_b)
-    fp_c = compute_index_fingerprint(sample_documents, settings_c)
-
-    assert fp_a != fp_b
-    assert fp_a != fp_c
-
-
-def test_validate_index_fingerprint(sample_documents, fake_embeddings_provider):
-    """Verify validate_index_fingerprint returns True for matched and False for stale index."""
-    settings = Settings()
+def test_fingerprint_scenario_a_identical_corpus_and_config(sample_documents, fake_embeddings_provider):
+    """Scenario A: identical corpus and config => valid index."""
+    settings = Settings(chunk_size=500, chunk_overlap=50, embedding_dimension=768, gemini_embedding_model="gemini-embedding-2")
     embeddings = fake_embeddings_provider.embed_documents(sample_documents)
     vs = VectorStore.from_documents(sample_documents, embeddings, settings=settings)
 
     assert validate_index_fingerprint(vs.manifest, sample_documents, settings) is True
 
-    # Alter documents
-    stale_docs = sample_documents[:-1]
-    assert validate_index_fingerprint(vs.manifest, stale_docs, settings) is False
+
+def test_fingerprint_scenario_b_modified_content(sample_documents, fake_embeddings_provider):
+    """Scenario B: modified document content => stale index."""
+    settings = Settings()
+    embeddings = fake_embeddings_provider.embed_documents(sample_documents)
+    vs = VectorStore.from_documents(sample_documents, embeddings, settings=settings)
+
+    modified_docs = [
+        Document(page_content="Contenido alterado en la base", metadata=sample_documents[0].metadata.copy())
+    ] + sample_documents[1:]
+
+    assert validate_index_fingerprint(vs.manifest, modified_docs, settings) is False
+
+
+def test_fingerprint_scenario_c_modified_chunk_size(sample_documents, fake_embeddings_provider):
+    """Scenario C: modified chunk_size => stale index."""
+    settings_index = Settings(chunk_size=500)
+    embeddings = fake_embeddings_provider.embed_documents(sample_documents)
+    vs = VectorStore.from_documents(sample_documents, embeddings, settings=settings_index)
+
+    settings_current = Settings(chunk_size=700)
+    assert validate_index_fingerprint(vs.manifest, sample_documents, settings_current) is False
+
+
+def test_fingerprint_scenario_d_modified_embedding_model(sample_documents, fake_embeddings_provider):
+    """Scenario D: modified embedding_model => stale index."""
+    settings_index = Settings(gemini_embedding_model="gemini-embedding-2")
+    embeddings = fake_embeddings_provider.embed_documents(sample_documents)
+    vs = VectorStore.from_documents(sample_documents, embeddings, settings=settings_index)
+
+    settings_current = Settings(gemini_embedding_model="gemini-embedding-3-exp")
+    assert validate_index_fingerprint(vs.manifest, sample_documents, settings_current) is False
+
+
+def test_fingerprint_scenario_e_modified_embedding_dimension(sample_documents, fake_embeddings_provider):
+    """Scenario E: modified embedding_dimension => stale index."""
+    settings_index = Settings(embedding_dimension=768)
+    embeddings = fake_embeddings_provider.embed_documents(sample_documents)
+    vs = VectorStore.from_documents(sample_documents, embeddings, settings=settings_index)
+
+    settings_current = Settings(embedding_dimension=1536)
+    assert validate_index_fingerprint(vs.manifest, sample_documents, settings_current) is False
+
+
+def test_verify_index_freshness_integration(tmp_path):
+    """Verify verify_index_freshness with on-disk knowledge directory."""
+    kb_dir = tmp_path / "knowledge"
+    internal_dir = kb_dir / "internal"
+    internal_dir.mkdir(parents=True)
+    doc_file = internal_dir / "doc1.txt"
+    doc_file.write_text("Contenido inicial para indexar.", encoding="utf-8")
+
+    from app.rag.loaders import load_knowledge_base
+    from app.rag.chunking import split_documents
+
+    settings = Settings()
+    docs = load_knowledge_base(str(kb_dir))
+    chunks = split_documents(docs, chunk_size=settings.chunk_size, chunk_overlap=settings.chunk_overlap)
+
+    provider = DeterministicFakeEmbeddings(768)
+    embeddings = provider.embed_documents(chunks)
+    vs = VectorStore.from_documents(chunks, embeddings, settings=settings)
+
+    # Fresh index
+    assert verify_index_freshness(vs.manifest, knowledge_dir=str(kb_dir), settings=settings) is True
+
+    # Mutate knowledge file -> Stale index
+    doc_file.write_text("Contenido modificado posteriormente.", encoding="utf-8")
+    assert verify_index_freshness(vs.manifest, knowledge_dir=str(kb_dir), settings=settings) is False

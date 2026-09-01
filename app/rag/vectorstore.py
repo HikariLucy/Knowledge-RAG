@@ -80,6 +80,34 @@ def validate_index_fingerprint(
     return manifest.fingerprint == current_fingerprint
 
 
+def verify_index_freshness(
+    manifest: IndexManifest,
+    knowledge_dir: str = "knowledge",
+    settings: Optional[Settings] = None,
+) -> bool:
+    """Verify if persisted index manifest matches current knowledge corpus and settings.
+
+    Args:
+        manifest: Persisted IndexManifest loaded from disk.
+        knowledge_dir: Path to directory with internal and external documents.
+        settings: Application settings.
+
+    Returns:
+        True if index is fresh and valid, False if stale or mismatched.
+    """
+    from app.rag.chunking import split_documents
+    from app.rag.loaders import load_knowledge_base
+
+    cfg = settings or get_settings()
+    current_docs = load_knowledge_base(knowledge_dir)
+    current_chunks = split_documents(
+        current_docs,
+        chunk_size=cfg.chunk_size,
+        chunk_overlap=cfg.chunk_overlap,
+    )
+    return validate_index_fingerprint(manifest, current_chunks, cfg)
+
+
 class VectorStore:
     """FAISS vector store managing normalized vector indexing, retrieval and persistence."""
 
@@ -307,6 +335,11 @@ class VectorStore:
             Document(page_content=item.page_content, metadata=item.metadata)
             for item in manifest.documents
         ]
+
+        if faiss_index.d != manifest.embedding_dimension:
+            raise ValueError(
+                f"FAISS index dimension ({faiss_index.d}) does not match manifest embedding dimension ({manifest.embedding_dimension})"
+            )
 
         if faiss_index.ntotal != len(documents):
             raise ValueError(
