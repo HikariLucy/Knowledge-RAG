@@ -5,6 +5,7 @@ from app.evaluation.schemas import (
     CaseEvaluationResult,
     CitationAndGenerationSummaryMetrics,
     EvaluationCase,
+    EvaluationCategory,
     EvaluationDataset,
     EvaluationReport,
     EvaluationRunMetadata,
@@ -20,6 +21,7 @@ from app.evaluation.schemas import (
 from app.evaluation.retrieval_utils import retrieve_balanced_raw
 
 __all__ = [
+    "EvaluationCategory",
     "ExpectedScope",
     "ExpectedBehavior",
     "EvaluationCase",

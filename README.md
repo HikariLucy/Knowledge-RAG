@@ -371,7 +371,7 @@ python scripts/test_rag_live.py
 
 ## Ejecutar pruebas automatizadas
 
-Ejecutar la suite completa de 131 pruebas automatizadas 100% offline (sin llamadas de red):
+Ejecutar la suite completa de 132 pruebas automatizadas 100% offline (sin llamadas de red):
 
 ```powershell
 python -m pytest -v
@@ -382,7 +382,7 @@ python -m pytest -v
 ## Fuentes de conocimiento
 
 - **`knowledge/internal/`**: Almacena documentación propietaria de la organización ficticia NovaTech SpA (políticas de seguridad, procedimientos de respuesta a incidentes, gestión de accesos y manuales operativos).
-- **`knowledge/external/`**: Almacena estándares técnicos de la industria, guías de buenas prácticas y marcos normativos de ciberseguridad.
+- **`knowledge/external/`**: Almacena estándares técnicos de la industria, guías de buenas prácticas y marcos normativos de ciberseguridad (OWASP LLM Prompt Injection Prevention Cheat Sheet, NIST SP 800-218 SSDF, NIST Privacy Framework, etc.).
 
 ---
 

@@ -161,6 +161,33 @@ def test_human_review_gate_detection():
         validate_dataset_for_official_run(dataset)
 
 
+def test_category_scope_mismatch_raises():
+    """Verify mismatch between category and expected_scope raises ValueError."""
+    with pytest.raises(ValueError, match="category='internal' must have expected_scope='internal'"):
+        EvaluationCase(
+            id="ERR-CAT-1",
+            query="Consulta interna",
+            category="internal",
+            expected_scope="external",  # Mismatch
+            answerable=True,
+            expected_source_types=["internal"],
+            expected_files=["doc.md"],
+            expected_behavior="grounded_answer",
+        )
+
+    with pytest.raises(ValueError, match="category='external' must have expected_scope='external'"):
+        EvaluationCase(
+            id="ERR-CAT-2",
+            query="Consulta externa",
+            category="external",
+            expected_scope="all",  # Mismatch
+            answerable=True,
+            expected_source_types=["external"],
+            expected_files=["doc.md"],
+            expected_behavior="grounded_answer",
+        )
+
+
 def test_draft_dataset_integrity():
     """Verify evaluation/dataset_draft.json on disk is valid and conforms to 20 controlled cases."""
     draft_path = Path("evaluation/dataset_draft.json")
@@ -169,12 +196,12 @@ def test_draft_dataset_integrity():
     dataset = load_dataset(draft_path)
     assert len(dataset.cases) == 20
 
-    # All 20 draft cases are now human reviewed
+    # Draft contains 8 cases pending re-review due to authoritative sources update
     reviewed_cases = [c.id for c in dataset.cases if c.human_reviewed]
     pending_cases = [c.id for c in dataset.cases if not c.human_reviewed]
-    assert len(reviewed_cases) == 20
-    assert len(pending_cases) == 0
-    assert has_unreviewed_cases(dataset) is False
+    assert len(reviewed_cases) == 12
+    assert len(pending_cases) == 8
+    assert has_unreviewed_cases(dataset) is True
 
     # Check categories distribution
     categories = [c.category for c in dataset.cases]

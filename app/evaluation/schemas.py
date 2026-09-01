@@ -3,6 +3,7 @@
 from typing import Any, Dict, List, Literal, Optional
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
+EvaluationCategory = Literal["internal", "external", "all", "out_of_domain"]
 ExpectedScope = Literal["internal", "external", "all"]
 ExpectedBehavior = Literal["grounded_answer", "abstain"]
 
@@ -12,7 +13,7 @@ class EvaluationCase(BaseModel):
 
     id: str = Field(..., min_length=1, description="Unique case identifier (e.g. 'EVAL-001')")
     query: str = Field(..., min_length=3, description="User query or question string")
-    category: str = Field(
+    category: EvaluationCategory = Field(
         ...,
         description="Evaluation category: 'internal', 'external', 'all', or 'out_of_domain'",
     )
@@ -46,6 +47,19 @@ class EvaluationCase(BaseModel):
     @model_validator(mode="after")
     def validate_case_consistency(self) -> "EvaluationCase":
         """Validate logical consistency between category, scope, and expected behavior."""
+        if self.category == "internal" and self.expected_scope != "internal":
+            raise ValueError(
+                f"Case {self.id}: category='internal' must have expected_scope='internal', got '{self.expected_scope}'."
+            )
+        if self.category == "external" and self.expected_scope != "external":
+            raise ValueError(
+                f"Case {self.id}: category='external' must have expected_scope='external', got '{self.expected_scope}'."
+            )
+        if self.category == "all" and self.expected_scope != "all":
+            raise ValueError(
+                f"Case {self.id}: category='all' must have expected_scope='all', got '{self.expected_scope}'."
+            )
+
         if self.category == "out_of_domain":
             if self.expected_scope is not None:
                 raise ValueError(
@@ -58,6 +72,10 @@ class EvaluationCase(BaseModel):
             if self.expected_files:
                 raise ValueError(
                     f"Case {self.id}: out_of_domain cases cannot require expected_files."
+                )
+            if self.expected_source_types:
+                raise ValueError(
+                    f"Case {self.id}: out_of_domain cases cannot require expected_source_types."
                 )
             if self.expected_behavior != "abstain":
                 raise ValueError(
