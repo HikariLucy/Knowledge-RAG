@@ -1,10 +1,11 @@
-# NIST Privacy Framework: Data Minimization and Protection Guidelines (Version 1.0)
+# Resumen Curado — NIST Privacy Framework v1.0: Data Minimization and Protection
 
-> **Aviso de Procedencia**: Documento técnico de procedencia externa real.
-> **Organización / Autores**: National Institute of Standards and Technology (NIST).
+> **Tipo de Documento**: Resumen técnico curado para KnowledgeFlow RAG basado en una fuente pública oficial.
+> **Fuente Oficial de Referencia**: NIST Privacy Framework: A Tool for Improving Privacy through Enterprise Risk Management (Version 1.0).
+> **Organización Emisora**: National Institute of Standards and Technology (NIST).
 > **URL de Origen**: https://www.nist.gov/privacy-framework/privacy-framework
-> **Fecha de Acceso**: 2026-09-01
-> **Temática**: Gestión de procesamiento de datos, minimización y protección de la privacidad (NIST Privacy Framework v1.0).
+> **Fecha de Consulta**: 2026-09-01
+> **Aviso de Procedencia**: Este archivo constituye una síntesis pedagógica y técnica curada para propósitos de evaluación y RAG en KnowledgeFlow RAG (ISY0101), no una reproducción íntegra del documento original.
 
 ## 1. Gestión del Procesamiento de Datos y Principio de Minimización (Data Processing Management - CT.DM-P)
 La categoría CT.DM-P del marco de privacidad de NIST ayuda a las organizaciones a gestionar los datos de manera coherente con su estrategia de gestión de riesgos y permite implementar principios de privacidad, incluyendo el principio de minimización de datos (*data minimization*).

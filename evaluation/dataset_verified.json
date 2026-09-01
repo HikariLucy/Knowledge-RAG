@@ -108,10 +108,11 @@
         "external"
       ],
       "expected_files": [
-        "referencia_seguridad.txt"
+        "referencia_seguridad.txt",
+        "owasp_llm_prompt_injection_prevention.md"
       ],
       "expected_behavior": "grounded_answer",
-      "notes": "Referencia de seguridad: validar y sanitizar prompts de entrada y filtrar PII.",
+      "notes": "Referencia de seguridad: validar y sanitizar prompts de entrada, separación de planos de control y datos (OWASP LLM Prompt Injection Prevention Cheat Sheet).",
       "human_reviewed": true
     },
     {
@@ -156,10 +157,11 @@
         "external"
       ],
       "expected_files": [
-        "referencia_seguridad.txt"
+        "referencia_seguridad.txt",
+        "nist_privacy_framework_data_minimization.md"
       ],
       "expected_behavior": "grounded_answer",
-      "notes": "Referencia de seguridad: recolectar solo datos necesarios y aplicar políticas de expiración y purga.",
+      "notes": "Referencia de seguridad: principio de minimización de datos para recolección, políticas de acceso para eliminación (CT.DM-P4) y destrucción conforme a políticas (CT.DM-P5).",
       "human_reviewed": true
     },
     {
@@ -246,10 +248,11 @@
       ],
       "expected_files": [
         "procedimiento_incidentes.md",
-        "guia_buenas_practicas.md"
+        "guia_buenas_practicas.md",
+        "nist_sp_800_218_ssdf.md"
       ],
       "expected_behavior": "grounded_answer",
-      "notes": "Consulta mixta: post-mortem a los 3 días hábiles (interno) y documentación arquitectural trazable (externo).",
+      "notes": "Consulta mixta: post-mortem a los 3 días hábiles (interno) y análisis de causa raíz y lecciones aprendidas según NIST SSDF RV.3 (externo).",
       "human_reviewed": true
     },
     {

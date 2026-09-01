@@ -113,7 +113,7 @@
       ],
       "expected_behavior": "grounded_answer",
       "notes": "Referencia de seguridad: validar y sanitizar prompts de entrada, separación de planos de control y datos (OWASP LLM Prompt Injection Prevention Cheat Sheet).",
-      "human_reviewed": false
+      "human_reviewed": true
     },
     {
       "id": "EVAL-008",
@@ -162,7 +162,7 @@
       ],
       "expected_behavior": "grounded_answer",
       "notes": "Referencia de seguridad: principio de minimización de datos para recolección, políticas de acceso para eliminación (CT.DM-P4) y destrucción conforme a políticas (CT.DM-P5).",
-      "human_reviewed": false
+      "human_reviewed": true
     },
     {
       "id": "EVAL-011",
@@ -253,7 +253,7 @@
       ],
       "expected_behavior": "grounded_answer",
       "notes": "Consulta mixta: post-mortem a los 3 días hábiles (interno) y análisis de causa raíz y lecciones aprendidas según NIST SSDF RV.3 (externo).",
-      "human_reviewed": false
+      "human_reviewed": true
     },
     {
       "id": "EVAL-016",

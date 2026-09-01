@@ -1,10 +1,11 @@
-# NIST SP 800-218: Secure Software Development Framework (SSDF) Version 1.1
+# Resumen Curado — NIST SP 800-218: Secure Software Development Framework (SSDF v1.1)
 
-> **Aviso de Procedencia**: Documento técnico de procedencia externa real.
-> **Organización / Autores**: National Institute of Standards and Technology (NIST), U.S. Department of Commerce.
+> **Tipo de Documento**: Resumen técnico curado para KnowledgeFlow RAG basado en una fuente pública oficial.
+> **Fuente Oficial de Referencia**: NIST Special Publication 800-218 (SSDF Version 1.1).
+> **Organización Emisora**: National Institute of Standards and Technology (NIST), U.S. Department of Commerce.
 > **URL de Origen**: https://csrc.nist.gov/pubs/sp/800/218/final
-> **Fecha de Acceso**: 2026-09-01
-> **Temática**: Prácticas fundamentales de desarrollo seguro de software y mitigación de vulnerabilidades (SSDF v1.1).
+> **Fecha de Consulta**: 2026-09-01
+> **Aviso de Procedencia**: Este archivo constituye una síntesis pedagógica y técnica curada para propósitos de evaluación y RAG en KnowledgeFlow RAG (ISY0101), no una reproducción íntegra del documento original.
 
 ## 1. Protección de Todas las Formas de Código (Protect Software - PS.1)
 - **Práctica PS.1**: Proteger todas las formas de código frente a accesos no autorizados y manipulaciones maliciosas.

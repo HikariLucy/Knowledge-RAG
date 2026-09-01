@@ -1,10 +1,11 @@
-# OWASP LLM Prompt Injection Prevention Cheat Sheet
+# Resumen Curado — OWASP LLM Prompt Injection Prevention Cheat Sheet
 
-> **Aviso de Procedencia**: Documento técnico de procedencia externa real.
-> **Organización / Autores**: OWASP (Open Web Application Security Project) Cheat Sheet Series.
+> **Tipo de Documento**: Resumen técnico curado para KnowledgeFlow RAG basado en una fuente pública oficial.
+> **Fuente Oficial de Referencia**: OWASP LLM Prompt Injection Prevention Cheat Sheet.
+> **Organización Emisora**: OWASP (Open Web Application Security Project) Cheat Sheet Series.
 > **URL de Origen**: https://cheatsheetseries.owasp.org/cheatsheets/LLM_Prompt_Injection_Prevention_Cheat_Sheet.html
-> **Fecha de Acceso**: 2026-09-01
-> **Temática**: Prevención de inyección directa e indirecta de prompts en aplicaciones basadas en Large Language Models (LLM).
+> **Fecha de Consulta**: 2026-09-01
+> **Aviso de Procedencia**: Este archivo constituye una síntesis pedagógica y técnica curada para propósitos de evaluación y RAG en KnowledgeFlow RAG (ISY0101), no una reproducción íntegra del documento original.
 
 ## 1. Definición y Tipos de Prompt Injection
 La inyección de prompts ocurre cuando un atacante manipula las entradas hacia un modelo de lenguaje para alterar su comportamiento previsto, eludir restricciones de seguridad o forzar la ejecución de acciones no deseadas.

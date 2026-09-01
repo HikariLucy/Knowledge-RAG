@@ -196,13 +196,12 @@ def test_draft_dataset_integrity():
     dataset = load_dataset(draft_path)
     assert len(dataset.cases) == 20
 
-    # Draft contains 3 cases pending re-review (EVAL-007, EVAL-010, EVAL-015)
+    # All 20 cases in draft are now human reviewed
     reviewed_cases = [c.id for c in dataset.cases if c.human_reviewed]
     pending_cases = [c.id for c in dataset.cases if not c.human_reviewed]
-    assert len(reviewed_cases) == 17
-    assert len(pending_cases) == 3
-    assert set(pending_cases) == {"EVAL-007", "EVAL-010", "EVAL-015"}
-    assert has_unreviewed_cases(dataset) is True
+    assert len(reviewed_cases) == 20
+    assert len(pending_cases) == 0
+    assert has_unreviewed_cases(dataset) is False
 
     # Check categories distribution
     categories = [c.category for c in dataset.cases]
