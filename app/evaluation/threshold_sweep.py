@@ -1,6 +1,7 @@
 """Threshold sweep calibration tool for evaluating similarity thresholds on retrieval results."""
 
 import argparse
+import math
 from pathlib import Path
 import sys
 from typing import Dict, List, Optional
@@ -69,6 +70,9 @@ def run_threshold_sweep(
     print(f"Retrieving raw candidates once for each of the {len(dataset.cases)} cases...")
     cached_retrievals: List[Dict[str, object]] = []
 
+    quota_int = math.ceil(top_k / 2)
+    quota_ext = top_k - quota_int
+
     for idx, case in enumerate(dataset.cases, start=1):
         decision = pipeline.router.route(case.query)
         scope = decision.source_scope
@@ -77,17 +81,26 @@ def run_threshold_sweep(
         if scope == "all":
             raw_int = pipeline.retriever.search(case.query, k=top_k, source_type="internal")
             raw_ext = pipeline.retriever.search(case.query, k=top_k, source_type="external")
-            raw_chunks = sorted(raw_int + raw_ext, key=lambda x: x.score, reverse=True)
+            cached_retrievals.append({
+                "case": case,
+                "scope": "all",
+                "raw_internal": raw_int,
+                "raw_external": raw_ext,
+            })
         elif scope in ("internal", "external"):
             raw_chunks = pipeline.retriever.search(case.query, k=top_k, source_type=scope)
+            cached_retrievals.append({
+                "case": case,
+                "scope": scope,
+                "chunks": raw_chunks,
+            })
         else:
             raw_chunks = pipeline.retriever.search(case.query, k=top_k)
-
-        cached_retrievals.append({
-            "case": case,
-            "scope": scope,
-            "chunks": raw_chunks,
-        })
+            cached_retrievals.append({
+                "case": case,
+                "scope": scope,
+                "chunks": raw_chunks,
+            })
 
     # 2. Evaluate thresholds locally in memory
     results_by_threshold: Dict[str, Dict[str, float]] = {}
@@ -105,10 +118,33 @@ def run_threshold_sweep(
 
         for item in cached_retrievals:
             case = item["case"]
-            chunks: List[SearchResult] = item["chunks"]  # type: ignore
+            scope = item["scope"]
 
-            # Filter chunks exceeding current threshold
-            valid = [ch for ch in chunks if ch.score >= thresh][:top_k]
+            if scope == "all":
+                raw_i: List[SearchResult] = item["raw_internal"]  # type: ignore
+                raw_e: List[SearchResult] = item["raw_external"]  # type: ignore
+
+                valid_i = [ch for ch in raw_i if ch.score >= thresh]
+                valid_e = [ch for ch in raw_e if ch.score >= thresh]
+
+                sel_i = valid_i[:quota_int]
+                sel_e = valid_e[:quota_ext]
+
+                i_def = quota_int - len(sel_i)
+                e_def = quota_ext - len(sel_e)
+
+                if i_def > 0 and len(valid_e) > quota_ext:
+                    sel_e = valid_e[: quota_ext + i_def]
+                elif e_def > 0 and len(valid_i) > quota_int:
+                    sel_i = valid_i[: quota_int + e_def]
+
+                comb = sel_i + sel_e
+                comb.sort(key=lambda x: x.score, reverse=True)
+                valid = comb[:top_k]
+            else:
+                chunks: List[SearchResult] = item["chunks"]  # type: ignore
+                valid = [ch for ch in chunks if ch.score >= thresh][:top_k]
+
             is_abstained = (len(valid) == 0)
 
             if case.answerable:

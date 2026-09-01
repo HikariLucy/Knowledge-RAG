@@ -89,3 +89,48 @@ def test_threshold_sweep_execution(tmp_path, fake_sweep_pipeline):
 
     # Verify pipeline settings were not modified
     assert fake_sweep_pipeline.settings.rag_min_similarity == 0.60
+
+
+def test_threshold_sweep_all_scope_preserves_balanced_quotas(tmp_path):
+    """Verify threshold sweep on scope='all' preserves dual quotas even when internal scores dominate."""
+    docs = [
+        Document(page_content="I1", metadata={"file_name": "internal_1.md", "source_type": "internal"}),
+        Document(page_content="I2", metadata={"file_name": "internal_2.md", "source_type": "internal"}),
+        Document(page_content="I3", metadata={"file_name": "internal_3.md", "source_type": "internal"}),
+        Document(page_content="I4", metadata={"file_name": "internal_4.md", "source_type": "internal"}),
+        Document(page_content="E1", metadata={"file_name": "external_1.txt", "source_type": "external"}),
+        Document(page_content="E2", metadata={"file_name": "external_2.txt", "source_type": "external"}),
+    ]
+    settings = Settings(embedding_dimension=768, retrieval_top_k=4, rag_min_similarity=0.60)
+    provider = DeterministicFakeEmbeddings(768)
+    embeddings = provider.embed_documents(docs)
+    vectorstore = VectorStore.from_documents(docs, embeddings, settings=settings)
+    retriever = Retriever(vectorstore=vectorstore, embeddings=provider, settings=settings)
+    # Fake router routes to 'all'
+    router = FakeSourceRouter(default_scope="all")
+    pipeline = RAGPipeline(retriever=retriever, router=router, settings=settings)
+
+    case = EvaluationCase(
+        id="SWEEP-ALL",
+        query="Compara interno y externo",
+        category="all",
+        expected_scope="all",
+        answerable=True,
+        expected_source_types=["internal", "external"],
+        expected_files=["external_1.txt"],
+        expected_behavior="grounded_answer",
+    )
+    dataset = EvaluationDataset(description="Test balanced sweep", cases=[case])
+    dataset_file = tmp_path / "sweep_all.json"
+    save_dataset(dataset, dataset_file)
+
+    results = run_threshold_sweep(
+        dataset_path=str(dataset_file),
+        thresholds=[0.0],
+        top_k=4,
+        pipeline=pipeline,
+    )
+
+    # external_1.txt must be retained because of the 2 external quota
+    assert results["0.00"]["hit_at_k_rate"] == 1.0
+    assert results["0.00"]["answerable_retained_rate"] == 1.0

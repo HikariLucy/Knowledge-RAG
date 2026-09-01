@@ -79,8 +79,16 @@ def evaluate_retrieval_case(
     case: EvaluationCase,
     search_results: List[SearchResult],
     top_k: int = 4,
+    retrieval_scope: Optional[str] = None,
 ) -> RetrievalEvaluationResult:
-    """Evaluate retrieval performance at source/file level for a single case."""
+    """Evaluate retrieval performance at source/file level for a single case.
+
+    Args:
+        case: EvaluationCase under evaluation.
+        search_results: Raw Top-K SearchResult items pre-threshold.
+        top_k: Top-K evaluation cut-off.
+        retrieval_scope: Explicit scope used for retrieval evaluation (defaults to case.expected_scope).
+    """
     if not case.answerable or not case.expected_files:
         return RetrievalEvaluationResult(
             case_id=case.id,
@@ -92,6 +100,8 @@ def evaluate_retrieval_case(
             source_scope_compliant=True,
             dual_source_coverage=None,
         )
+
+    effective_scope = retrieval_scope if retrieval_scope is not None else case.expected_scope
 
     retrieved_k = search_results[:top_k]
     retrieved_files = [
@@ -120,10 +130,10 @@ def evaluate_retrieval_case(
         else 0.0
     )
 
-    # Source Scope Compliance
-    if case.expected_scope == "internal":
+    # Source Scope Compliance (evaluates against effective_scope used for retrieval)
+    if effective_scope == "internal":
         compliant = all(st == "internal" for st in retrieved_types) if retrieved_types else True
-    elif case.expected_scope == "external":
+    elif effective_scope == "external":
         compliant = all(st == "external" for st in retrieved_types) if retrieved_types else True
     else:
         compliant = True
@@ -257,11 +267,11 @@ def evaluate_generation_case(
         all_resolve = (final_cit_count > 0 and final_cit_count == valid_cit_count)
         integrity_pass = has_required and all_resolve
     else:
-        has_required = True
+        has_required = False
         all_resolve = (final_cit_count == 0)
-        integrity_pass = (final_cit_count == 0)
+        integrity_pass = False
 
-    # Traceable answer success rate (verifies pipeline contract)
+    # Traceable answer success rate (verifies pipeline contract for answerable cases)
     if case.answerable:
         traceable_success = (
             (not answer.abstained)
@@ -291,23 +301,31 @@ def calculate_generation_summary(
     results: List[GenerationEvaluationResult],
     cases: List[EvaluationCase],
 ) -> CitationAndGenerationSummaryMetrics:
-    """Calculate aggregated citation integrity and traceable answer success rates."""
+    """Calculate aggregated citation integrity (over generated answers) and traceable answer success rates."""
     answerable_ids = {c.id for c in cases if c.answerable}
     ans_results = [r for r in results if r.case_id in answerable_ids]
-    total = len(ans_results)
+    total_ans = len(ans_results)
 
-    if total == 0:
-        return CitationAndGenerationSummaryMetrics(
-            total_answerable_cases=0,
-            citation_integrity_rate=0.0,
-            traceable_answer_success_rate=0.0,
-        )
+    # Citation integrity rate is calculated strictly over ACTUALLY GENERATED non-abstained answers
+    generated_answers = [r for r in ans_results if not r.actual_abstained]
+    total_generated = len(generated_answers)
 
-    cit_pass = sum(1 for r in ans_results if r.final_citation_integrity_pass) / total
-    traceable_pass = sum(1 for r in ans_results if r.traceable_answer_success) / total
+    cit_pass_rate = (
+        sum(1 for r in generated_answers if r.final_citation_integrity_pass) / total_generated
+        if total_generated > 0
+        else 0.0
+    )
+
+    # Traceable answer success rate penalizes false abstentions over total answerable cases
+    traceable_pass_rate = (
+        sum(1 for r in ans_results if r.traceable_answer_success) / total_ans
+        if total_ans > 0
+        else 0.0
+    )
 
     return CitationAndGenerationSummaryMetrics(
-        total_answerable_cases=total,
-        citation_integrity_rate=round(cit_pass, 4),
-        traceable_answer_success_rate=round(traceable_pass, 4),
+        total_answerable_cases=total_ans,
+        total_generated_answers=total_generated,
+        citation_integrity_rate=round(cit_pass_rate, 4),
+        traceable_answer_success_rate=round(traceable_pass_rate, 4),
     )

@@ -66,11 +66,28 @@ python -m app.evaluation.threshold_sweep --dataset evaluation/dataset_draft.json
 
 ## 4. Métricas Calculadas
 
-- **Source Router Accuracy**: Exactitud y matriz de confusión $3 \times 3$ sobre casos con alcance esperado explícito.
-- **Retrieval Hit@K**: Proporción de casos donde al menos un archivo esperado apareció en Top-K.
+- **Source Router Accuracy**: Exactitud y matriz de confusión $3 \times 3$ sobre casos con alcance esperado explícito (los casos `out_of_domain` quedan excluidos).
+- **Retrieval Hit@K**: Proporción de casos donde al menos un archivo esperado apareció en Top-K (evaluado de forma aislada con `expected_scope` pre-threshold).
 - **Mean Reciprocal Rank (MRR)**: Posición inversa media de la primera fuente relevante ($1/r$).
 - **Expected Source Recall@K**: Fracción de fuentes esperadas recuperadas a nivel de archivo.
-- **Source Scope Compliance**: Cumplimiento del filtro estricto por procedencia.
+- **Source Scope Compliance**: Cumplimiento del filtro estricto por procedencia según el ámbito evaluado.
 - **Dual Source Coverage**: Cobertura combinada (interna y externa) en consultas de alcance `all`.
-- **Abstention Metrics**: Exactitud, precisión y recall considerando la abstención como clase positiva.
-- **Citation Integrity & Traceability**: Verificación de presencia de citas válidas y trazabilidad contractual de la respuesta generada.
+- **Abstention Metrics**: Exactitud, precisión y recall considerando la abstención como clase positiva (TP, FP, TN, FN).
+- **Citation Integrity Rate**: Proporción de respuestas efectivamente generadas (no abstained) que contienen $\ge 1$ cita documental y cero citas fantasma.
+- **Traceable Answer Success Rate**: Tasa de éxito contractual de respuestas fundamentadas sobre el total de casos respondibles (penaliza falsas abstenciones).
+
+---
+
+## 5. Política de Versionamiento de Resultados (*Git Policy*)
+
+- Los reportes generados en `evaluation/results/` (`.json` y `_summary.md`) son de carácter exploratorio y se encuentran ignorados por Git mediante `.gitignore` para no saturar el repositorio.
+- **Evidencia Oficial**: Cuando los estudiantes ejecuten la evaluación oficial sobre `dataset_verified.json` con `--require-reviewed --require-clean`, podrán seleccionar el reporte definitivo y versionarlo explícitamente en Git como evidencia reproducible.
+- El archivo `evaluation/results/.gitkeep` se mantiene versionado para asegurar la existencia del directorio en clones nuevos.
+
+---
+
+## 6. Separación Metodológica de Etapas (*Stage Isolation*)
+
+1. **Routing**: Mide la clasificación del `SourceRouter` contra `expected_scope`.
+2. **Retrieval Aislado**: Mide `Hit@K`, `MRR` y `Expected Source Recall@K` pre-threshold utilizando `expected_scope` para no contaminar la calidad de recuperación con eventuales fallos de enrutamiento.
+3. **End-to-End**: Mide abstención temprana y generación grounded completa utilizando el flujo real orquestado por `RAGPipeline`.

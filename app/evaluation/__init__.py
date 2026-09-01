@@ -17,6 +17,8 @@ from app.evaluation.schemas import (
     RouterSummaryMetrics,
 )
 
+from app.evaluation.retrieval_utils import retrieve_balanced_raw
+
 __all__ = [
     "ExpectedScope",
     "ExpectedBehavior",
@@ -32,4 +34,5 @@ __all__ = [
     "CitationAndGenerationSummaryMetrics",
     "EvaluationRunMetadata",
     "EvaluationReport",
+    "retrieve_balanced_raw",
 ]

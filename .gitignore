@@ -22,6 +22,10 @@ vectorstore/
 *.sqlite
 *.sqlite3
 
+# Evaluation results (exploratory runs are ignored; .gitkeep is preserved)
+evaluation/results/*
+!evaluation/results/.gitkeep
+
 # IDE
 .vscode/
 .idea/

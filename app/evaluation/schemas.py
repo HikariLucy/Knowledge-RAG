@@ -204,6 +204,7 @@ class CitationAndGenerationSummaryMetrics(BaseModel):
     """Aggregated metrics for citation integrity and traceable generation."""
 
     total_answerable_cases: int
+    total_generated_answers: int
     citation_integrity_rate: float
     traceable_answer_success_rate: float
 

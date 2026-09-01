@@ -274,5 +274,44 @@ def test_generation_citation_integrity_and_traceability():
     # Summary
     sum_gen = calculate_generation_summary([g_val, g_no_cit], [case, case])
     assert sum_gen.total_answerable_cases == 2
+    assert sum_gen.total_generated_answers == 2
     assert sum_gen.citation_integrity_rate == 0.50
     assert sum_gen.traceable_answer_success_rate == 0.50
+
+
+def test_false_abstention_does_not_inflate_citation_integrity_rate():
+    """Verify false abstention is excluded from citation_integrity denominator and penalizes traceable_answer_success."""
+    case1 = EvaluationCase(id="C1", query="consulta 1", category="internal", expected_scope="internal", answerable=True, expected_source_types=["internal"], expected_files=["doc.md"], expected_behavior="grounded_answer")
+    case2 = EvaluationCase(id="C2", query="consulta 2", category="internal", expected_scope="internal", answerable=True, expected_source_types=["internal"], expected_files=["doc.md"], expected_behavior="grounded_answer")
+    case3 = EvaluationCase(id="C3", query="consulta 3", category="internal", expected_scope="internal", answerable=True, expected_source_types=["internal"], expected_files=["doc.md"], expected_behavior="grounded_answer")
+
+    # 1. Answer generated with valid citation
+    ans1 = RAGAnswer(query="consulta 1", source_scope="internal", answer="R1 [S1]", citations=["S1"], sources=[SourceReference(id="S1", file_name="doc.md", source_type="internal", score=0.8)], abstained=False)
+    # 2. False abstention (answerable=True but abstained=True)
+    ans2 = RAGAnswer(query="consulta 2", source_scope="internal", answer="Abstención indebida", citations=[], sources=[], abstained=True)
+    # 3. Answer generated without citation
+    ans3 = RAGAnswer(query="consulta 3", source_scope="internal", answer="Sin citas", citations=[], sources=[SourceReference(id="S1", file_name="doc.md", source_type="internal", score=0.8)], abstained=False)
+
+    g1 = evaluate_generation_case(case1, ans1)
+    g2 = evaluate_generation_case(case2, ans2)
+    g3 = evaluate_generation_case(case3, ans3)
+
+    summary = calculate_generation_summary([g1, g2, g3], [case1, case2, case3])
+    assert summary.total_answerable_cases == 3
+    assert summary.total_generated_answers == 2  # Only C1 and C3 generated answers
+    assert summary.citation_integrity_rate == 0.50  # 1 pass out of 2 generated answers (C2 did not inflate it!)
+    assert summary.traceable_answer_success_rate == 0.3333  # 1 pass out of 3 answerable cases
+
+
+def test_out_of_domain_excluded_from_retrieval_summary():
+    """Verify out-of-domain cases (answerable=False) do not contribute to retrieval summary metrics."""
+    case_ans = EvaluationCase(id="ANS-1", query="consulta respondible", category="internal", expected_scope="internal", answerable=True, expected_source_types=["internal"], expected_files=["doc.md"], expected_behavior="grounded_answer")
+    case_ood = EvaluationCase(id="OOD-1", query="consulta fuera de dominio", category="out_of_domain", expected_scope=None, answerable=False, expected_source_types=[], expected_files=[], expected_behavior="abstain")
+
+    ret_ans = evaluate_retrieval_case(case_ans, [SearchResult(document=Document(page_content="T", metadata={"file_name": "doc.md", "source_type": "internal"}), score=0.9, rank=1)], top_k=2)
+    ret_ood = evaluate_retrieval_case(case_ood, [], top_k=2)
+
+    summary = calculate_retrieval_summary([ret_ans, ret_ood], [case_ans, case_ood])
+    assert summary.total_answerable_cases == 1
+    assert summary.hit_at_k_rate == 1.0
+    assert summary.mean_reciprocal_rank == 1.0

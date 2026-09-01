@@ -25,6 +25,7 @@ from app.evaluation.metrics import (
     evaluate_router_case,
 )
 from app.evaluation.reporter import save_json_report, save_markdown_summary
+from app.evaluation.retrieval_utils import retrieve_balanced_raw
 from app.evaluation.schemas import (
     CaseEvaluationResult,
     EvaluationDataset,
@@ -143,7 +144,7 @@ def run_evaluation(
     for idx, case in enumerate(dataset.cases, start=1):
         print(f"[{idx}/{total_cases}] Evaluating case {case.id} ({case.category})...")
 
-        # Step A: Routing
+        # Step A: Routing (evaluates router accuracy independently)
         route_decision = pipeline.router.route(case.query)
         r_eval = evaluate_router_case(
             case=case,
@@ -151,20 +152,22 @@ def run_evaluation(
             confidence=route_decision.confidence,
         )
 
-        # Step B: Retrieval
-        if route_decision.source_scope == "all":
-            retrieved_chunks = pipeline._retrieve_balanced_all(case.query, top_k=k)
-        elif route_decision.source_scope in ("internal", "external"):
-            retrieved_chunks = pipeline.retriever.search(
-                case.query, k=k, source_type=route_decision.source_scope  # type: ignore
-            )
+        # Step B: Isolated Retrieval (evaluates retrieval quality independently using case.expected_scope)
+        if case.answerable and case.expected_scope is not None:
+            if case.expected_scope == "all":
+                retrieved_chunks = retrieve_balanced_raw(pipeline.retriever, case.query, top_k=k)
+            else:
+                retrieved_chunks = pipeline.retriever.search(
+                    case.query, k=k, source_type=case.expected_scope
+                )
         else:
-            retrieved_chunks = pipeline.retriever.search(case.query, k=k)
+            retrieved_chunks = []
 
         ret_eval = evaluate_retrieval_case(
             case=case,
             search_results=retrieved_chunks,
             top_k=k,
+            retrieval_scope=case.expected_scope,
         )
 
         # Step C: End-to-End Generation & Abstention

@@ -136,3 +136,66 @@ def test_runner_require_reviewed_gate(tmp_path, fake_eval_pipeline):
             require_reviewed=True,
             pipeline=fake_eval_pipeline,
         )
+
+
+def test_router_error_does_not_contaminate_isolated_retrieval(tmp_path, fake_eval_pipeline):
+    """Verify that a routing error does NOT penalize isolated retrieval gold metrics."""
+    # Force router to wrongly return 'external' for an internal question
+    fake_eval_pipeline.router.default_scope = "external"
+
+    case = EvaluationCase(
+        id="ISO-01",
+        query="¿Cómo reportar un incidente?",
+        category="internal",
+        expected_scope="internal",
+        answerable=True,
+        expected_source_types=["internal"],
+        expected_files=["procedimiento_incidentes.md"],
+        expected_behavior="grounded_answer",
+        human_reviewed=False,
+    )
+    dataset = EvaluationDataset(description="Test isolation", cases=[case])
+    dataset_file = tmp_path / "iso_dataset.json"
+    save_dataset(dataset, dataset_file)
+
+    report = run_evaluation(
+        dataset_path=str(dataset_file),
+        output_dir=str(tmp_path / "results"),
+        require_reviewed=False,
+        top_k=2,
+        pipeline=fake_eval_pipeline,
+    )
+
+    # Router was wrong: expected internal, predicted external
+    assert report.router_summary.router_accuracy == 0.0
+    assert report.cases[0].router_result.is_correct is False
+
+    # Isolated retrieval evaluated with expected_scope='internal' -> successfully found internal file!
+    assert report.retrieval_summary.hit_at_k_rate == 1.0
+    assert report.cases[0].retrieval_result.hit_at_k == 1.0
+    assert report.cases[0].retrieval_result.source_scope_compliant is True
+
+
+def test_retrieve_balanced_raw_preserves_quotas_pre_threshold():
+    """Verify retrieve_balanced_raw preserves dual quotas without applying min_similarity cutoff."""
+    docs = [
+        Document(page_content="I1", metadata={"file_name": "i1.md", "source_type": "internal"}),
+        Document(page_content="I2", metadata={"file_name": "i2.md", "source_type": "internal"}),
+        Document(page_content="E1", metadata={"file_name": "e1.md", "source_type": "external"}),
+        Document(page_content="E2", metadata={"file_name": "e2.md", "source_type": "external"}),
+    ]
+    # Set high rag_min_similarity that would normally filter everything in core pipeline
+    settings = Settings(embedding_dimension=768, retrieval_top_k=4, rag_min_similarity=0.99)
+    provider = DeterministicFakeEmbeddings(768)
+    embeddings = provider.embed_documents(docs)
+    vectorstore = VectorStore.from_documents(docs, embeddings, settings=settings)
+    retriever = Retriever(vectorstore=vectorstore, embeddings=provider, settings=settings)
+
+    from app.evaluation.retrieval_utils import retrieve_balanced_raw
+    results = retrieve_balanced_raw(retriever, "query", top_k=4)
+
+    # Must return 4 results (2 internal + 2 external) despite high min_similarity setting
+    assert len(results) == 4
+    types = [r.document.metadata.get("source_type") for r in results]
+    assert types.count("internal") == 2
+    assert types.count("external") == 2
