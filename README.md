@@ -338,7 +338,28 @@ uvicorn app.main:app --reload --port 8000
   ```
 - **Documentación Swagger**: `http://localhost:8000/docs`
 
-### 4. Evaluación Sistemática y Calibración de Umbrales
+### 4. Interfaz Web (KnowledgeFlow UI)
+
+KnowledgeFlow RAG incluye una consola web de consulta y trazabilidad documental servida directamente desde FastAPI:
+
+```powershell
+python -m uvicorn app.main:app --reload
+```
+
+Abrir en el navegador:
+```text
+http://127.0.0.1:8000/
+```
+
+Características de la interfaz:
+- **Espacio de Consulta**: Input amplio con selector de alcance (`AUTOMÁTICO`, `INTERNO`, `EXTERNO`, `AMBOS`) y chips con preguntas sugeridas.
+- **Respuesta Fundamentada**: Renderizado tipográfico editorial con insignias interactivas `[S1]`, `[S2]` que resaltan la evidencia vinculada.
+- **Libro Mayor de Evidencia (Evidence Ledger)**: Panel lateral que lista cada fragmento recuperado con su identificador `S#`, procedencia (`[INT] INTERNA` / `[EXT] EXTERNA`), archivo fuente, índice de fragmento y puntaje de similitud coseno (`Similitud`).
+- **Franja de Trazabilidad**: Indicadores directos del alcance aplicado, total de fuentes recuperadas, citas aplicadas y estado de fundamentación.
+- **Manejo Seguro de Abstención**: Estado visual diferenciado ante evidencia insuficiente (`Similitud < 0.60`), comunicando el comportamiento de seguridad sin emitir alucinaciones.
+- **Trazabilidad Técnica Desplegable**: Vista estructurada de los datos contractuales retornados por `QueryResponse`.
+
+### 5. Evaluación Sistemática y Calibración de Umbrales
 
 ```powershell
 # A. Ejecución exploratoria sobre dataset borrador controlado

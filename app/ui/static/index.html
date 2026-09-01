@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="KnowledgeFlow RAG — Mesa de consulta y trazabilidad de conocimiento organizacional basada en evidencia y fuentes verificables.">
+  <title>KnowledgeFlow RAG — Mesa de Consulta y Trazabilidad</title>
+  <link rel="stylesheet" href="/static/styles.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+</head>
+<body>
+  <header class="app-header">
+    <div class="header-inner container">
+      <div class="brand-group">
+        <div class="brand-mark" aria-hidden="true">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+            <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+            <path d="M8 7h8"></path>
+            <path d="M8 11h6"></path>
+          </svg>
+        </div>
+        <div class="brand-titles">
+          <h1 class="brand-name">KnowledgeFlow</h1>
+          <span class="brand-sub">Recuperación y Trazabilidad Documental</span>
+        </div>
+      </div>
+      <div class="header-tags">
+        <span class="sys-badge" id="system-badge">RAG / KNOWLEDGE CONSOLE</span>
+      </div>
+    </div>
+  </header>
+
+  <main class="main-content container">
+    <!-- Query Workspace Section -->
+    <section class="query-workspace-card" aria-labelledby="query-heading">
+      <div class="card-header">
+        <h2 id="query-heading" class="section-title">Consulta de conocimiento</h2>
+        <span class="section-hint">Recuperación semántica balanceada sobre corpus institucional y normativo</span>
+      </div>
+
+      <form id="query-form" class="query-form" novalidate>
+        <div class="input-wrapper">
+          <label for="query-input" class="sr-only">Escribe tu consulta</label>
+          <textarea
+            id="query-input"
+            name="query"
+            rows="3"
+            class="query-textarea"
+            placeholder="Consulta una política, procedimiento o estándar técnico (ej. requisitos de contraseñas, gestión de incidentes, mitigación OWASP)..."
+            required
+            aria-describedby="scope-selector-desc"
+          ></textarea>
+        </div>
+
+        <div class="control-bar">
+          <div class="scope-group" role="group" aria-labelledby="scope-label">
+            <span id="scope-label" class="control-label">Alcance de búsqueda:</span>
+            <div class="segmented-control" id="scope-selector">
+              <label class="segment-option">
+                <input type="radio" name="source_scope" value="" checked>
+                <span class="segment-label">AUTOMÁTICO</span>
+              </label>
+              <label class="segment-option">
+                <input type="radio" name="source_scope" value="internal">
+                <span class="segment-label">INTERNO</span>
+              </label>
+              <label class="segment-option">
+                <input type="radio" name="source_scope" value="external">
+                <span class="segment-label">EXTERNO</span>
+              </label>
+              <label class="segment-option">
+                <input type="radio" name="source_scope" value="all">
+                <span class="segment-label">AMBOS</span>
+              </label>
+            </div>
+            <span id="scope-selector-desc" class="sr-only">Selecciona el alcance documental para la recuperación. Automático delega la clasificación al Source Router.</span>
+          </div>
+
+          <button type="submit" id="submit-btn" class="btn-primary">
+            <span class="btn-text">Consultar</span>
+            <svg class="btn-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <line x1="22" y1="2" x2="11" y2="13"></line>
+              <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+            </svg>
+          </button>
+        </div>
+
+        <div class="examples-bar" aria-label="Consultas de ejemplo">
+          <span class="examples-label">Ejemplos sugeridos:</span>
+          <div class="chips-list">
+            <button type="button" class="chip-btn" data-query="¿Qué requisitos deben cumplir las contraseñas internas?">
+              Requisitos contraseñas internas
+            </button>
+            <button type="button" class="chip-btn" data-query="¿Cómo se previene Prompt Injection según OWASP?">
+              Prevención Prompt Injection OWASP
+            </button>
+            <button type="button" class="chip-btn" data-query="Compara el procedimiento interno de incidentes con buenas prácticas externas.">
+              Comparativa incidentes interna vs buenas prácticas
+            </button>
+          </div>
+        </div>
+      </form>
+    </section>
+
+    <!-- Loading State Section -->
+    <div id="loading-state" class="loading-state hidden" aria-live="polite">
+      <div class="loading-banner">
+        <div class="process-indicator">
+          <div class="spinner-track">
+            <div class="spinner-bar"></div>
+          </div>
+        </div>
+        <div class="loading-content">
+          <p class="loading-title">Procesando consulta...</p>
+          <div class="process-steps" aria-hidden="true">
+            <span class="p-step active">Enrutando fuentes</span>
+            <span class="p-arrow">→</span>
+            <span class="p-step">Recuperando evidencia</span>
+            <span class="p-arrow">→</span>
+            <span class="p-step">Construyendo respuesta</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Error State Section -->
+    <div id="error-state" class="error-state hidden" role="alert" aria-live="assertive">
+      <div class="error-banner">
+        <div class="error-icon" aria-hidden="true">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="8" x2="12" y2="12"></line>
+            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+          </svg>
+        </div>
+        <div class="error-body">
+          <h3 id="error-title" class="error-title">Error al procesar la consulta</h3>
+          <p id="error-message" class="error-message">Ocurrió un error inesperado al conectar con el motor RAG.</p>
+        </div>
+        <button type="button" id="retry-btn" class="btn-secondary">Reintentar</button>
+      </div>
+    </div>
+
+    <!-- Results Workspace (Answer & Evidence Ledger) -->
+    <section id="results-area" class="results-layout hidden" aria-live="polite">
+      
+      <!-- Column 1: Grounded Answer & Traceability Strip -->
+      <div class="answer-column">
+        <div class="result-card answer-card">
+          <div class="card-header result-header">
+            <div class="header-title-group">
+              <h2 class="section-title" id="answer-heading">Respuesta Fundamentada</h2>
+              <span id="grounding-status-pill" class="status-pill status-grounded">FUNDAMENTADA</span>
+            </div>
+            <div class="header-meta">
+              <span id="scope-badge" class="scope-tag scope-all">ALCANCE: ALL</span>
+            </div>
+          </div>
+
+          <!-- Answer Body -->
+          <div class="answer-body">
+            <!-- Normal grounded response -->
+            <div id="answer-content" class="answer-text"></div>
+
+            <!-- Abstention state box -->
+            <div id="abstention-box" class="abstention-box hidden" role="status">
+              <div class="abstention-icon" aria-hidden="true">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                  <path d="M12 8v4"></path>
+                  <path d="M12 16h.01"></path>
+                </svg>
+              </div>
+              <div class="abstention-details">
+                <h3 class="abstention-title">Evidencia Insuficiente</h3>
+                <p class="abstention-text">
+                  KnowledgeFlow no encontró evidencia documental con similitud suficiente (umbral ≥ 0.60) para fundamentar una respuesta verificable a esta consulta.
+                </p>
+                <p class="abstention-policy">
+                  El sistema se abstiene intencionalmente para evitar alucinaciones y proteger la fidelidad institucional.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Traceability Strip -->
+          <div class="traceability-strip" aria-label="Resumen de trazabilidad">
+            <div class="trace-item">
+              <span class="trace-label">Alcance usado</span>
+              <span id="trace-scope" class="trace-value">ALL</span>
+            </div>
+            <div class="trace-divider"></div>
+            <div class="trace-item">
+              <span class="trace-label">Fuentes recuperadas</span>
+              <span id="trace-sources-count" class="trace-value">0</span>
+            </div>
+            <div class="trace-divider"></div>
+            <div class="trace-item">
+              <span class="trace-label">Citas verificadas</span>
+              <span id="trace-citations-count" class="trace-value">0</span>
+            </div>
+            <div class="trace-divider"></div>
+            <div class="trace-item">
+              <span class="trace-label">Estado de fundamentación</span>
+              <span id="trace-grounded-state" class="trace-value state-grounded">FUNDAMENTADA</span>
+            </div>
+          </div>
+
+          <!-- Technical Traceability Collapsible -->
+          <details class="technical-details">
+            <summary class="technical-summary">
+              <span>Ver trazabilidad técnica del motor</span>
+              <svg class="details-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="6 9 12 15 18 9"></polyline>
+              </svg>
+            </summary>
+            <div class="technical-body">
+              <div class="tech-table-wrapper">
+                <table class="tech-table">
+                  <thead>
+                    <tr>
+                      <th scope="col">Parámetro</th>
+                      <th scope="col">Valor Retornado</th>
+                    </tr>
+                  </thead>
+                  <tbody id="tech-table-body">
+                    <!-- Populated dynamically with safe text nodes -->
+                  </tbody>
+                </table>
+              </div>
+              <div class="tech-raw-wrapper">
+                <span class="tech-raw-label">QueryResponse JSON:</span>
+                <pre class="tech-raw-json"><code id="tech-json-content"></code></pre>
+              </div>
+            </div>
+          </details>
+        </div>
+      </div>
+
+      <!-- Column 2: Evidence Ledger -->
+      <aside class="evidence-column" aria-labelledby="evidence-heading">
+        <div class="result-card evidence-card">
+          <div class="card-header evidence-header">
+            <div class="header-title-group">
+              <h2 id="evidence-heading" class="section-title">Evidencia Recuperada</h2>
+              <span id="evidence-count-badge" class="count-badge">0</span>
+            </div>
+            <span class="evidence-hint">Ordenada por similitud</span>
+          </div>
+
+          <div class="evidence-body">
+            <div id="evidence-list" class="evidence-list" role="list">
+              <!-- Evidence items populated dynamically -->
+            </div>
+            <div id="evidence-empty" class="evidence-empty hidden">
+              <p>No se recuperaron fuentes para esta consulta.</p>
+            </div>
+          </div>
+        </div>
+      </aside>
+
+    </section>
+  </main>
+
+  <footer class="app-footer">
+    <div class="container footer-inner">
+      <span class="footer-copy">KnowledgeFlow RAG &bull; Motor de Consulta y Recuperación Trazable</span>
+      <span class="footer-meta">ISY0101 &bull; Ingeniería de Soluciones con IA</span>
+    </div>
+  </footer>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>
