@@ -6,13 +6,13 @@ Sistema modular basado en LLM, agentes y Retrieval-Augmented Generation (RAG) pa
 
 ## Descripción
 
-**KnowledgeFlow RAG** es un proyecto desarrollado para la asignatura **ISY0101 - Ingeniería de Soluciones con IA** (Evaluación Parcial N°1). Su propósito es implementar una arquitectura técnica robusta para el procesamiento, segmentación, indexación vectorial y recuperación semántica de documentación institucional interna y externa, garantizando trazabilidad y mitigando alucinaciones.
+**KnowledgeFlow RAG** es un proyecto desarrollado para la asignatura **ISY0101 - Ingeniería de Soluciones con IA** (Evaluación Parcial N°1). Su propósito es implementar una arquitectura técnica robusta para el procesamiento, segmentación, indexación vectorial, recuperación semántica y generación aumentada de documentación institucional interna y externa, garantizando trazabilidad, fundamentación estricta en evidencia (*grounding*) y mitigación de alucinaciones.
 
 ---
 
 ## Problema organizacional
 
-En entornos corporativos, la información crítica (políticas, procedimientos operativos, guías técnicas y normativas externas) se encuentra frecuentemente fragmentada y dispersa en múltiples repositorios y formatos. Los colaboradores invierten tiempo excesivo en localizar respuestas confiables o corren el riesgo de operar con versiones desactualizadas.
+En entornos corporativos, la información crítica (políticas, procedimientos operativos, guías técnicas y normativas externas) se encuentra frecuentemente fragmentada y dispersa en múltiples repositorios y formatos. Los colaboradores invierten tiempo excesivo en localizar respuestas confiables o corren el riesgo de operar con versiones desactualizadas o generar respuestas no fundamentadas.
 
 ---
 
@@ -22,13 +22,15 @@ Proveer un motor RAG asistido por LLM capaz de:
 1. Ingerir y segmentar documentación de fuentes internas y externas conservando metadatos de procedencia.
 2. Generar representaciones vectoriales densas con `gemini-embedding-2`.
 3. Indexar y recuperar evidencia contextual relevante mediante búsqueda semántica con FAISS y similitud coseno.
-4. Generar respuestas aumentadas, precisas y fundamentadas en fuentes verificables (Fase 3 pendiente).
+4. Clasificar la intención y alcance de búsqueda mediante un agente enrutador (`SourceRouter`).
+5. Generar respuestas aumentadas, precisas y fundamentadas exclusivamente en la evidencia recuperada, con citas documentales verificables `[S1..SN]`.
+6. Abstenerse de responder ante consultas fuera de dominio o con similitud semántica insuficiente.
 
 ---
 
-## Alcance actual (Fases 0, 1 y 2)
+## Alcance actual (Fases 0, 1, 2 y 3)
 
-El estado actual del proyecto cubre la **Fundación Técnica**, la **Ingesta Documental** y el **Motor de Embeddings y Recuperación Semántica con FAISS**:
+El estado actual del proyecto cubre la **Fundación Técnica**, la **Ingesta Documental**, el **Motor de Embeddings y FAISS**, y la **Generación Grounded con Agente de Enrutamiento**:
 
 - **Fase 0 — Fundación Técnica**:
   - Estructura modular en Python / FastAPI.
@@ -41,27 +43,36 @@ El estado actual del proyecto cubre la **Fundación Técnica**, la **Ingesta Doc
   - Cargadores para formatos `.txt`, `.md` y `.pdf`.
   - Clasificación e inferencia estricta por jerarquía de ruta (`internal` vs `external`).
   - Extracción estricta de metadatos (`source`, `source_type`, `file_name`, `file_extension`, `page`).
-  - Omisión controlada de documentos sin texto extraíble y filtrado de fragmentos vacíos o compuestos únicamente por espacios en blanco.
+  - Omisión controlada de documentos sin texto extraíble y filtrado de fragmentos vacíos.
   - Estrategia de chunking con `RecursiveCharacterTextSplitter`.
   - Preservación íntegra de metadatos y generación de `chunk_index` para trazabilidad.
   - Validación de coherencia de parámetros (`0 <= CHUNK_OVERLAP < CHUNK_SIZE`).
 
 - **Fase 2 — Embeddings Gemini + FAISS + Recuperación Semántica**:
   - Integración con SDK `google-genai` y modelo `gemini-embedding-2`.
-  - Preparación asimétrica de inputs de acuerdo con directrices oficiales:
+  - Preparación asimétrica de inputs:
     - **Documentos**: `title: {title} | text: {content}` (prioridad: `metadata["title"]` $\to$ `metadata["file_name"]` $\to$ `"none"`).
     - **Consultas**: `task: search result | query: {query}`.
-    - Preservación íntegra de `page_content` y `metadata` originales sin contaminación.
   - Contrato de cardinalidad estricta ($1\text{ chunk} \to 1\text{ vector}$ y $1\text{ query} \to 1\text{ vector}$).
   - Dimensión de embeddings configurable (`EMBEDDING_DIMENSION=768`), validada $>0$.
   - Vector Store local con FAISS (`IndexFlatIP` sobre vectores normalizados L2 para similitud coseno exacta).
-  - Resultados tipados (`SearchResult`) con score de similitud ($[-1.0, 1.0]$, donde mayor puntaje indica mayor similitud), ranking y metadata completa.
-  - Filtrado estricto por `source_type` (`internal`, `external` o `None`) garantizando Top-K exacto dentro del subconjunto.
+  - Resultados tipados (`SearchResult`) con score de similitud, ranking y metadata completa.
+  - Filtrado estricto por `source_type` (`internal`, `external` o `None`) garantizando Top-K exacto.
   - Persistencia segura y no ejecutable (sin `pickle`): índice nativo `index.faiss` y manifiesto JSON `documents.json`.
-  - Huella digital determinista (`fingerprint` SHA-256) para validación de vigencia del índice frente a cambios en el corpus o parámetros.
-  - Herramientas de línea de comandos para indexación (`python -m app.rag.indexer`) y búsqueda interactiva (`python -m app.rag.search`).
-  - Suite de 62 pruebas unitarias 100% offline con proveedor determinista desacoplado (`DeterministicFakeEmbeddings`).
-  - Script aislado de verificación en vivo con Gemini API (`scripts/test_gemini_embedding.py`).
+  - Huella digital determinista (`fingerprint` SHA-256) para validación de vigencia del índice.
+  - Herramientas CLI: `python -m app.rag.indexer` y `python -m app.rag.search`.
+
+- **Fase 3 — Prompt Engineering + RAG Generation + Source Routing Agent**:
+  - **Agente de Enrutamiento de Fuentes (`SourceRouter`)**: clasifica consultas en `internal`, `external` o `all` mediante Gemini estructurado con fallback seguro ante incertidumbre.
+  - **Recuperación Balanceada Dual para `all`**: para $k=4$, recupera 2 internas y 2 externas, rellenando cupos si un subconjunto tiene menor evidencia y ordenando finalmente por similitud descendente ($\le K$).
+  - **Umbral de Similitud y Abstención Temprana (`RAG_MIN_SIMILARITY=0.60`)**: si la evidencia recuperada no alcanza el umbral mínimo, el pipeline se abstiene tempranamente sin invocar al LLM generador (`abstained=True`).
+  - **Prompt Engineering Estructurado (`RAG_SYSTEM_PROMPT`)**: directivas de rol, contexto, anclaje estricto en hechos, citas obligatorias y protección activa contra Prompt Injection (tratando `<context>` y `<question>` como datos no confiables pasivos).
+  - **Constructor de Contexto y Referencias (`build_rag_context`)**: asigna identificadores de turno `[S1]..[SN]` y construye `List[SourceReference]` sin mutar metadata.
+  - **Validación Estricta de Citas y Reparación**: verifica que toda afirmación contenga citas válidas existentes en el contexto, detecta citas fantasma (e.g. `[S7]`) y ejecuta como máximo un reintento de reparación antes de emitir un fallback controlado.
+  - **Endpoint REST (`POST /api/query`)**: expone el pipeline RAG vía FastAPI con ciclo de vida optimizado (vector store cargado en memoria) y respuesta HTTP 503 controlada si el índice no existe o está desactualizado.
+  - **CLI de Consulta Completa (`python -m app.rag.ask`)**: interfaz interactiva para consultar el pipeline RAG y visualizar respuestas, citas y fuentes.
+  - **Suite de Pruebas**: 104 pruebas unitarias 100% offline con proveedores fake deterministas (`FakeSourceRouter`, `FakeRAGGenerator`, `DeterministicFakeEmbeddings`).
+  - **Scripts de Verificación Live**: `scripts/test_gemini_chat.py` y `scripts/test_rag_live.py`.
 
 ---
 
@@ -69,7 +80,7 @@ El estado actual del proyecto cubre la **Fundación Técnica**, la **Ingesta Doc
 
 ```mermaid
 flowchart TD
-    subgraph Fase_1["Fase 1: Ingesta y Segmentación (Implementado)"]
+    subgraph Fase_1["Fase 1: Ingesta y Segmentación"]
         A["Documentos Internos\n(knowledge/internal/)"] --> C["Loaders\n(.txt, .md, .pdf)"]
         B["Documentos Externos\n(knowledge/external/)"] --> C
         C --> D["Documentos con Metadata\n(source, source_type, file_name, file_extension)"]
@@ -77,28 +88,32 @@ flowchart TD
         E --> F["Chunks con Metadata & chunk_index"]
     end
 
-    subgraph Fase_2["Fase 2: Embeddings, FAISS y Recuperación Semántica (Implementado)"]
-        F --> G["Preparación de Documento\ntitle: {title} | text: {content}"]
+    subgraph Fase_2["Fase 2: Embeddings, FAISS y Almacenamiento"]
+        F --> G["Preparación Asimétrica de Documento\ntitle: {title} | text: {content}"]
         G --> H["Gemini Embedding 2\n(dim=768, L2-normalized)"]
         H --> I["Vector Store FAISS\n(IndexFlatIP / Cosine Sim)"]
         I --> J["Persistencia Local Segura\n(vectorstore/index.faiss + documents.json)"]
-
-        Q["Consulta de Usuario\n(Query)"] --> R["Preparación de Consulta\ntask: search result | query: {query}"]
-        R --> S["Gemini Embedding 2\n(Query Vector)"]
-        S --> T["Retriever\n(Top-K + Filtro internal/external)"]
-        J -.-> T
-        T --> U["Resultados Semánticos\n(SearchResult: doc + score + rank)"]
     end
 
-    subgraph Fase_3["Fase 3: Generación y Agente RAG (Pendiente)"]
-        U -.-> V["Prompt Aumentado con Contexto & Evidencia"]
-        V -.-> W["LLM (gemini-3.5-flash)"]
-        W -.-> X["Respuesta Fundamentada con Citas Trazables"]
+    subgraph Fase_3["Fase 3: Routing, Retrieval Balanceado y Generación Grounded"]
+        Q["Consulta del Usuario\n(Query)"] --> R["Source Routing Agent\n(GeminiSourceRouter)"]
+        R -->|scope: internal / external / all| RET["Retriever Semántico\n(Top-K + Filtro Balanceado)"]
+        J -.-> RET
+        RET --> THRESH{"¿Score >= RAG_MIN_SIMILARITY?"}
+        THRESH -->|No / Vacío| ABST["Abstención Temprana\n(abstained=True)"]
+        THRESH -->|Sí| CTX["Constructor de Contexto\n([S1]..[SN] + SourceReferences)"]
+        CTX --> PROMPT["Prompt con Defensas Anti-Injection\n<context> ... </context>\n<question> ... </question>"]
+        PROMPT --> GEN["Gemini RAG Generator\n(RAG_SYSTEM_PROMPT)"]
+        GEN --> VAL{"Validación de Citas\n(Sin phantoms & >= 1 cita)"}
+        VAL -->|Válida| OUT["RAGAnswer / QueryResponse\n(Answer + Citations + Sources)"]
+        VAL -->|Inválida / 0 citas| REP["1 Reintento de Corrección"]
+        REP -->|Válida tras reintento| OUT
+        REP -->|Falla persistente| OUT
     end
 
     style Fase_1 fill:#e1f5fe,stroke:#0288d1,stroke-width:2px
     style Fase_2 fill:#e8f5e9,stroke:#388e3c,stroke-width:2px
-    style Fase_3 fill:#f5f5f5,stroke:#9e9e9e,stroke-width:2px,stroke-dasharray: 5 5
+    style Fase_3 fill:#fff3e0,stroke:#f57c00,stroke-width:2px
 ```
 
 ---
@@ -109,7 +124,13 @@ flowchart TD
 Knowledge-RAG/
 ├── app/
 │   ├── __init__.py
-│   ├── main.py              # Aplicación FastAPI y endpoint /health
+│   ├── main.py              # Aplicación FastAPI, health check y registro de rutas API
+│   ├── agents/
+│   │   ├── __init__.py
+│   │   └── source_router.py # Agente clasificador de alcance (internal/external/all)
+│   ├── api/
+│   │   ├── __init__.py
+│   │   └── routes.py        # Endpoint POST /api/query con protección 503 ante stale index
 │   ├── core/
 │   │   ├── __init__.py
 │   │   └── config.py        # Configuración tipada con Pydantic Settings
@@ -118,30 +139,45 @@ Knowledge-RAG/
 │   │   └── client.py        # Cliente desacoplado para Google Gemini
 │   └── rag/
 │       ├── __init__.py      # Exportaciones públicas de RAG
-│       ├── schemas.py       # Modelos de metadatos, SearchResult y IndexManifest
+│       ├── schemas.py       # Modelos Pydantic (RAGAnswer, RouteDecision, SourceReference, etc.)
 │       ├── loaders.py       # Carga de documentos (.txt, .md, .pdf)
 │       ├── chunking.py      # Segmentación con RecursiveCharacterTextSplitter
 │       ├── embeddings.py    # Preparación asimétrica y cliente Gemini Embedding 2
-│       ├── vectorstore.py   # FAISS VectorStore, persistencia JSON y fingerprint
+│       ├── vectorstore.py   # FAISS VectorStore, persistencia JSON y fingerprint SHA-256
 │       ├── retriever.py     # Pipeline de búsqueda semántica y filtros
+│       ├── context.py       # Formateo de contexto [S1..SN] y validación de citas
+│       ├── prompts.py       # RAG_SYSTEM_PROMPT estructurado y defensas contra injection
+│       ├── generator.py     # Generador grounded con validación y reparación de citas
+│       ├── pipeline.py      # Orquestador end-to-end (Router -> Balanced Retrieval -> Generator)
 │       ├── indexer.py       # CLI para carga, chunking, embedding e indexación
-│       └── search.py        # CLI de demostración de recuperación semántica
+│       ├── search.py        # CLI de demostración de recuperación semántica
+│       └── ask.py           # CLI interactivo de consulta RAG con respuestas fundamentadas
 ├── knowledge/
-│   ├── internal/            # Políticas, procedimientos y FAQs internas
-│   └── external/            # Normativas, estándares y guías externas
+│   ├── internal/            # Políticas, procedimientos y normativas internas (NovaTech SpA)
+│   └── external/            # Normativas, guías técnicas y estándares de la industria
 ├── scripts/
-│   └── test_gemini_embedding.py  # Script manual de verificación de API Gemini
+│   ├── test_gemini_embedding.py  # Script manual de verificación de embeddings Gemini
+│   ├── test_gemini_chat.py       # Script manual de verificación de chat Gemini
+│   └── test_rag_live.py          # Script manual de verificación end-to-end RAG en vivo
 ├── tests/
 │   ├── __init__.py
+│   ├── conftest.py          # Fixtures seguras para Windows y pytest
 │   ├── test_health.py       # Pruebas del endpoint /health
 │   ├── test_loaders.py      # Pruebas de carga e inferencia de metadatos
-│   ├── test_chunking.py     # Pruebas de división y preservación de trazabilidad
+│   ├── test_chunking.py     # Pruebas de división y trazabilidad
 │   ├── test_config_llm.py   # Pruebas de configuración y cliente LLM
 │   ├── test_embeddings.py   # Pruebas de preparación y proveedor de embeddings
 │   ├── test_vectorstore.py  # Pruebas de FAISS, métricas, filtros y persistencia
-│   └── test_retriever.py   # Pruebas del pipeline de recuperación y validaciones
+│   ├── test_retriever.py   # Pruebas del pipeline de recuperación
+│   ├── test_router.py       # Pruebas del agente de enrutamiento y fallbacks
+│   ├── test_prompts.py      # Pruebas del system prompt y encapsulamiento XML
+│   ├── test_context.py      # Pruebas de construcción de contexto y validación de citas
+│   ├── test_security.py     # Pruebas de mitigación de prompt injection
+│   ├── test_generator.py    # Pruebas del generador y ciclo de reparación
+│   ├── test_pipeline.py     # Pruebas de orquestación, retrieval balanceado y abstención
+│   └── test_api.py          # Pruebas de endpoints FastAPI (POST /api/query)
 ├── .env.example             # Plantilla de variables de entorno
-├── .gitignore               # Exclusiones de Git (entornos, vectorstore, caches)
+├── .gitignore               # Exclusiones de Git (entornos, vectorstore, caches, .env)
 ├── pytest.ini               # Configuración de pruebas automatizadas
 ├── requirements.txt         # Dependencias del proyecto
 └── README.md                # Documentación del proyecto
@@ -188,143 +224,122 @@ Copy-Item .env.example .env
 Parámetros configurables en `.env`:
 - `APP_NAME`: Nombre del servicio (predeterminado: `KnowledgeFlow RAG`).
 - `APP_ENV`: Entorno de ejecución (`development`, `production`).
-- `GEMINI_API_KEY`: Clave de API de Google Gemini (requerida para indexación en vivo y llamadas reales al modelo).
-- `GEMINI_CHAT_MODEL`: Modelo generativo (predeterminado: `gemini-3.5-flash`).
+- `GEMINI_API_KEY`: Clave de API de Google Gemini (requerida para llamadas reales al modelo y generación).
+- `GEMINI_CHAT_MODEL`: Modelo generativo LLM (predeterminado: `gemini-3.5-flash`; en local se puede utilizar `gemini-2.5-flash` según disponibilidad de cuota).
 - `GEMINI_EMBEDDING_MODEL`: Modelo de embeddings (predeterminado: `gemini-embedding-2`).
 - `CHUNK_SIZE`: Tamaño de segmento en caracteres (predeterminado: `500`).
 - `CHUNK_OVERLAP`: Solapamiento de segmento en caracteres (predeterminado: `50`).
 - `EMBEDDING_DIMENSION`: Dimensionalidad de los vectores densos (predeterminado: `768`).
-- `RETRIEVAL_TOP_K`: Número de resultados semánticos a recuperar por defecto (predeterminado: `4`).
+- `RETRIEVAL_TOP_K`: Número de resultados semánticos a recuperar (predeterminado: `4`).
+- `RAG_MIN_SIMILARITY`: Umbral mínimo de similitud coseno para considerar evidencia válida (predeterminado: `0.60`).
+- `LLM_TEMPERATURE`: Temperatura de generación para el LLM (predeterminado: `1.0`).
 - `VECTORSTORE_DIR`: Directorio local para almacenamiento del índice FAISS (predeterminado: `vectorstore`).
 
 ---
 
-## Uso de CLI: Indexación y Búsqueda Semántica
+## Uso de la Solución
 
 ### 1. Indexar la base de conocimiento
 
-Ejecuta el pipeline completo de carga, chunking, generación de embeddings e indexación en FAISS:
+Ejecuta el pipeline completo de carga, chunking, generación de embeddings densos con `gemini-embedding-2` e indexación en FAISS:
 
 ```powershell
 python -m app.rag.indexer
 ```
 
-Salida esperada:
-```text
-========================================
-      KnowledgeFlow RAG Indexer
-========================================
-Loading documents from: 'knowledge'...
-Documents loaded: 7
-Splitting documents (chunk_size=500, chunk_overlap=50)...
-Chunks generated: 18
-Generating embeddings via model 'gemini-embedding-2' (dim=768)...
-Embeddings generated: 18
-Building FAISS index (Inner Product / Cosine Similarity)...
-Index saved to: '...\vectorstore'
-----------------------------------------
-Total Chunks:       18
-Internal Chunks:    9
-External Chunks:    9
-Embedding Dim:      768
-Index Fingerprint:  a3f89e2c...
-========================================
-Indexing completed successfully.
-```
+### 2. Consultar el Asistente RAG vía CLI (`app.rag.ask`)
 
-### 2. Ejecutar búsqueda semántica (Demostración)
-
-Consulta el índice persistido sin requerir servidor web:
+Ejecuta consultas en lenguaje natural con enrutamiento automático, recuperación balanceada y respuestas fundamentadas con citas:
 
 ```powershell
-# Búsqueda global (todas las fuentes)
-python -m app.rag.search "¿Qué debo hacer ante un incidente de seguridad?"
+# Consulta sobre políticas internas (clasifica a internal)
+python -m app.rag.ask "¿Cómo reportar un incidente de seguridad?"
 
-# Búsqueda filtrando únicamente fuentes internas y solicitando 2 resultados
-python -m app.rag.search "autenticación multifactor" --top-k 2 --source-type internal
+# Consulta comparativa (clasifica a all con recuperación balanceada)
+python -m app.rag.ask "Compara las políticas internas de contraseñas de NovaTech con los estándares de buenas prácticas"
 
-# Búsqueda filtrando únicamente normativas y guías externas
-python -m app.rag.search "vulnerabilidades OWASP" --top-k 3 --source-type external
+# Consulta con override manual de alcance y top-k personalizado
+python -m app.rag.ask "¿Qué recomendaciones hay sobre manejo de secretos?" -s external -k 3
+
+# Consulta fuera de dominio (gatilla abstención temprana)
+python -m app.rag.ask "¿Cuál es la velocidad de la luz en el vacío?"
 ```
 
-Salida esperada:
+Ejemplo de salida de consulta interna verificada:
 ```text
 ========================================
-      KnowledgeFlow RAG Search Demo
+      KnowledgeFlow RAG Assistant
 ========================================
-Query:       ¿Qué debo hacer ante un incidente de seguridad?
-Top-K:       4
-Filter:      None (All Sources)
-Results:     4 found
+Query:        ¿Cómo reportar un incidente de seguridad?
+Source Scope: internal
+Abstained:    False
+----------------------------------------
+Answer:
+Para reportar un incidente de seguridad, se debe notificar inmediatamente cualquier evento inusual, anomalía en registros del sistema o sospecha de compromiso de credenciales. Esto se puede hacer a través del canal de guardia de ciberseguridad, enviando un correo a alerta-seguridad@novatech-demo.local, o registrando un ticket de severidad alta en la mesa de ayuda [S1].
+
+Citations:    S1
+
+Retrieved Evidence Sources:
+  [S1] File: procedimiento_incidentes.md | Type: internal | Score: 0.7817 | Chunk: 1
+  [S2] File: procedimiento_incidentes.md | Type: internal | Score: 0.7167 | Chunk: 0
+  [S3] File: procedimiento_incidentes.md | Type: internal | Score: 0.7151 | Chunk: 5
+  [S4] File: procedimiento_incidentes.md | Type: internal | Score: 0.7103 | Chunk: 3
 ========================================
-
-[1] Score (Cosine Sim): 0.8542
-    Source Type: internal
-    Source:      knowledge/internal/protocolo_incidentes.md
-    File:        protocolo_incidentes.md
-    Chunk Index: 0
-    Text Preview:
-      # Protocolo de Respuesta ante Incidentes...
-
-[2] Score (Cosine Sim): 0.7819
-    Source Type: internal
-    Source:      knowledge/internal/politica_seguridad.md
-    File:        politica_seguridad.md
-    Chunk Index: 1
-    Text Preview:
-      En caso de sospecha o detección de una brecha de seguridad...
 ```
+
+### 3. Iniciar la API REST de FastAPI
+
+```powershell
+uvicorn app.main:app --reload --port 8000
+```
+
+- **Health Check**: `GET http://localhost:8000/health`
+- **Consulta RAG**: `POST http://localhost:8000/api/query`
+  ```json
+  {
+    "query": "¿Qué requisitos deben cumplir las contraseñas?",
+    "source_scope": "internal",
+    "k": 4
+  }
+  ```
+- **Documentación Swagger**: `http://localhost:8000/docs`
 
 ---
 
 ## Verificación de API Gemini en Vivo
 
-Para validar la conectividad real con Google Gemini API y la generación de embeddings en dimensión 768:
+Para validar la conectividad real con Google Gemini API sin exponer credenciales:
 
 ```powershell
+# 1. Verificar generación de embeddings (gemini-embedding-2)
 python scripts/test_gemini_embedding.py
-```
 
-- Si `GEMINI_API_KEY` está configurada, generará un embedding de prueba, comprobará la dimensión y reportará éxito sin exponer claves ni vectores.
-- Si no está configurada, mostrará una advertencia informativa y saldrá limpiamente.
+# 2. Verificar generación de chat (gemini-2.5-flash / gemini-3.5-flash)
+python scripts/test_gemini_chat.py
+
+# 3. Verificar pipeline RAG end-to-end en vivo
+python scripts/test_rag_live.py
+```
 
 ---
 
 ## Ejecutar pruebas automatizadas
 
-Ejecutar la suite completa de pruebas unitarias offline (62 tests):
+Ejecutar la suite completa de 104 pruebas unitarias 100% offline (sin llamadas de red):
 
 ```powershell
 python -m pytest -v
 ```
 
-Las pruebas cubren:
-- Salud del servicio FastAPI (`tests/test_health.py`).
-- Ingesta documental y jerarquía de rutas (`tests/test_loaders.py`).
-- Segmentación recursiva y trazabilidad (`tests/test_chunking.py`).
-- Configuración y cliente desacoplado (`tests/test_config_llm.py`).
-- Formateo asimétrico y proveedor de embeddings (`tests/test_embeddings.py`).
-- Almacenamiento FAISS, métricas, filtros exactos y fingerprint (`tests/test_vectorstore.py`).
-- Pipeline de recuperación semántica (`tests/test_retriever.py`).
-
 ---
 
 ## Fuentes de conocimiento
 
-- **`knowledge/internal/`**: Almacena documentación propietaria interna de la organización (políticas de seguridad, procedimientos de respuesta a incidentes, manuales operativos y FAQs).
-- **`knowledge/external/`**: Almacena fuentes públicas, estándares técnicos de la industria, guías de buenas prácticas y marcos normativos.
+- **`knowledge/internal/`**: Almacena documentación propietaria de la organización ficticia NovaTech SpA (políticas de seguridad, procedimientos de respuesta a incidentes, gestión de accesos y manuales operativos).
+- **`knowledge/external/`**: Almacena estándares técnicos de la industria, guías de buenas prácticas y marcos normativos de ciberseguridad.
 
 ---
 
 ## Datos demo
 
 > **Aviso Académico**: La organización **NovaTech SpA** y los documentos contenidos en `knowledge/internal/` y `knowledge/external/` son enteramente ficticios y han sido diseñados de forma sintética exclusivamente con propósitos pedagógicos para la asignatura **ISY0101**. No corresponden a personas, empresas o infraestructuras reales.
-
----
-
-## Estado del proyecto y próximos pasos
-
-- **Completado (Fase 0)**: Fundación técnica, FastAPI, configuración centralizada y cliente Gemini desacoplado.
-- **Completado (Fase 1)**: Ingesta de `.txt`, `.md`, `.pdf`, clasificación `internal`/`external`, extracción estricta de metadatos y chunking con trazabilidad.
-- **Completado (Fase 2)**: Gemini Embedding 2, preparación asimétrica de inputs, FAISS con similitud coseno, filtros exactos por fuente, persistencia segura en JSON + FAISS binario, huella digital y CLI de indexación/búsqueda.
-- **Pendiente (Fase 3)**: Orquestación del agente RAG con LangGraph / LangChain, aumento de contexto, generación de respuestas con `gemini-3.5-flash` y evaluación de métricas de calidad y alucinación.

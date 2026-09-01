@@ -111,3 +111,25 @@ def test_validate_citations_detects_phantom_citations():
     assert is_valid is False
     assert valids == ["S1"]
     assert phantoms == ["S7", "S9"]
+
+
+def test_validate_citations_zero_citations_invalid_when_sources_exist():
+    """Verify validate_citations fails if response lacks citations while sources exist."""
+    valid_ids = {"S1", "S2"}
+    text = "Respuesta sin ninguna cita documental."
+    is_valid, valids, phantoms = validate_citations(text, valid_ids)
+
+    assert is_valid is False
+    assert valids == []
+    assert phantoms == []
+
+
+def test_validate_citations_zero_citations_valid_when_sources_empty():
+    """Verify validate_citations passes with zero citations when valid_source_ids is empty."""
+    valid_ids = set()
+    text = "No encontré evidencia suficiente en las fuentes disponibles."
+    is_valid, valids, phantoms = validate_citations(text, valid_ids)
+
+    assert is_valid is True
+    assert valids == []
+    assert phantoms == []

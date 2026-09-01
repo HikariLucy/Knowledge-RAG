@@ -133,3 +133,61 @@ def test_gemini_rag_generator_repair_failure_fallback(sample_source_refs):
     assert is_grounded is False
     assert citations == []
     assert "No fue posible generar una respuesta con trazabilidad verificable" in answer
+
+
+def test_gemini_rag_generator_zero_citations_repair_success(sample_source_refs):
+    """Verify GeminiRAGGenerator repairs a response that initially contained zero citations."""
+    mock_client = MagicMock()
+    mock_client.is_configured = True
+    mock_sdk = MagicMock()
+
+    # Attempt 1: zero citations
+    resp1 = MagicMock()
+    resp1.text = "Respuesta sin citas documentales."
+
+    # Attempt 2: repair adds valid citation [S1]
+    resp2 = MagicMock()
+    resp2.text = "Respuesta reparada con cita documental válida [S1]."
+
+    mock_sdk.models.generate_content.side_effect = [resp1, resp2]
+    mock_client.get_client.return_value = mock_sdk
+
+    generator = GeminiRAGGenerator(gemini_client=mock_client)
+    answer, citations, is_grounded = generator.generate(
+        query="Pregunta de prueba",
+        context_str="[S1]...",
+        source_references=sample_source_refs,
+    )
+
+    assert is_grounded is True
+    assert citations == ["S1"]
+    assert "[S1]" in answer
+
+
+def test_gemini_rag_generator_zero_citations_repair_failure_fallback(sample_source_refs):
+    """Verify GeminiRAGGenerator falls back safely when repair continues to lack citations."""
+    mock_client = MagicMock()
+    mock_client.is_configured = True
+    mock_sdk = MagicMock()
+
+    # Attempt 1: zero citations
+    resp1 = MagicMock()
+    resp1.text = "Respuesta sin citas."
+
+    # Attempt 2: still zero citations
+    resp2 = MagicMock()
+    resp2.text = "Respuesta aún sin citas."
+
+    mock_sdk.models.generate_content.side_effect = [resp1, resp2]
+    mock_client.get_client.return_value = mock_sdk
+
+    generator = GeminiRAGGenerator(gemini_client=mock_client)
+    answer, citations, is_grounded = generator.generate(
+        query="Pregunta de prueba",
+        context_str="[S1]...",
+        source_references=sample_source_refs,
+    )
+
+    assert is_grounded is False
+    assert citations == []
+    assert "No fue posible generar una respuesta con trazabilidad verificable" in answer

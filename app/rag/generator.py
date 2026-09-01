@@ -113,16 +113,21 @@ class GeminiRAGGenerator(BaseRAGGenerator):
         if is_valid:
             return answer_text, valid_citations, True
 
-        # 3. Attempt 1 controlled repair if phantom citations were detected
-        logger.warning(
-            "Detected phantom citations %s in generation. Attempting 1 repair...",
-            phantom_citations,
-        )
+        # 3. Attempt 1 controlled repair if citations were invalid or missing
         sorted_valid = ", ".join(sorted(valid_ids))
+        if phantom_citations:
+            reason = f"utilizaste citas inexistentes: {phantom_citations}"
+        else:
+            reason = "no incluiste ninguna cita documental obligatoria [S#] de la evidencia provista"
+
+        logger.warning(
+            "Generation citation validation failed (%s). Attempting 1 repair...",
+            reason,
+        )
         repair_prompt = (
             f"{user_prompt}\n\n"
-            f"[ADVERTENCIA DE CORRECCIÓN]: En el intento anterior utilizaste citas inexistentes: {phantom_citations}. "
-            f"Vuelve a generar la respuesta utilizando ÚNICAMENTE citas válidas entre: [{sorted_valid}]. "
+            f"[ADVERTENCIA DE CORRECCIÓN]: En el intento anterior {reason}. "
+            f"Vuelve a generar la respuesta fundamentando tus afirmaciones e incluyendo al menos una cita válida entre: [{sorted_valid}]. "
             f"Si algún dato no está en esas fuentes, no lo incluyas."
         )
 

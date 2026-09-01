@@ -41,6 +41,11 @@ def run_live_rag_check() -> None:
     print("========================================")
     print("    KnowledgeFlow Live RAG Test         ")
     print("========================================")
+    print(f"Chat Model:    {settings.gemini_chat_model}")
+    print(f"Embed Model:   {settings.gemini_embedding_model}")
+    print(f"Min Sim Thresh:{settings.rag_min_similarity}")
+    print(f"Temperature:   {settings.llm_temperature}")
+    print("----------------------------------------")
 
     vdir = settings.vectorstore_dir
     try:

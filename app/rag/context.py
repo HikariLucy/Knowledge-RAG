@@ -107,5 +107,8 @@ def validate_citations(
         else:
             phantom_citations.append(cid)
 
-    is_valid = len(phantom_citations) == 0
+    # Valid if no phantom citations AND at least 1 valid citation when sources exist
+    is_valid = (len(phantom_citations) == 0) and (
+        len(valid_citations) > 0 or len(valid_source_ids) == 0
+    )
     return is_valid, valid_citations, phantom_citations
