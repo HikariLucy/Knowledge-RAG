@@ -15,8 +15,29 @@ def test_settings_defaults():
     assert settings.app_name == "KnowledgeFlow RAG"
     assert settings.chunk_size == 500
     assert settings.chunk_overlap == 50
+    assert settings.embedding_dimension == 768
+    assert settings.retrieval_top_k == 4
+    assert settings.vectorstore_dir == "vectorstore"
     assert settings.gemini_chat_model == "gemini-3.5-flash"
     assert settings.gemini_embedding_model == "gemini-embedding-2"
+
+
+def test_settings_validation_invalid_embedding_dimension():
+    """Verify non-positive embedding dimension raises ValueError."""
+    with pytest.raises(ValueError, match="embedding_dimension must be positive"):
+        Settings(embedding_dimension=0)
+
+    with pytest.raises(ValueError, match="embedding_dimension must be positive"):
+        Settings(embedding_dimension=-100)
+
+
+def test_settings_validation_invalid_retrieval_top_k():
+    """Verify non-positive retrieval_top_k raises ValueError."""
+    with pytest.raises(ValueError, match="retrieval_top_k must be positive"):
+        Settings(retrieval_top_k=0)
+
+    with pytest.raises(ValueError, match="retrieval_top_k must be positive"):
+        Settings(retrieval_top_k=-2)
 
 
 def test_gemini_client_unconfigured():

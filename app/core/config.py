@@ -22,6 +22,11 @@ class Settings(BaseSettings):
     chunk_size: int = 500
     chunk_overlap: int = 50
 
+    # Vector Store & Retrieval Defaults
+    embedding_dimension: int = 768
+    retrieval_top_k: int = 4
+    vectorstore_dir: str = "vectorstore"
+
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",
@@ -30,8 +35,8 @@ class Settings(BaseSettings):
     )
 
     @model_validator(mode="after")
-    def validate_chunk_parameters(self) -> "Settings":
-        """Validate chunk size and overlap consistency."""
+    def validate_parameters(self) -> "Settings":
+        """Validate chunk and retrieval configuration parameters."""
         if self.chunk_size <= 0:
             raise ValueError(f"chunk_size must be positive, got {self.chunk_size}")
         if self.chunk_overlap < 0:
@@ -41,6 +46,14 @@ class Settings(BaseSettings):
         if self.chunk_overlap >= self.chunk_size:
             raise ValueError(
                 f"chunk_overlap ({self.chunk_overlap}) must be strictly less than chunk_size ({self.chunk_size})"
+            )
+        if self.embedding_dimension <= 0:
+            raise ValueError(
+                f"embedding_dimension must be positive, got {self.embedding_dimension}"
+            )
+        if self.retrieval_top_k <= 0:
+            raise ValueError(
+                f"retrieval_top_k must be positive, got {self.retrieval_top_k}"
             )
         return self
 
