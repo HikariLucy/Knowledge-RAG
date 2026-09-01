@@ -169,14 +169,32 @@ def test_draft_dataset_integrity():
     dataset = load_dataset(draft_path)
     assert len(dataset.cases) == 20
 
-    # Ensure draft still contains unreviewed cases overall
-    assert has_unreviewed_cases(dataset) is True
-
-    # Count reviewed vs pending
+    # All 20 draft cases are now human reviewed
     reviewed_cases = [c.id for c in dataset.cases if c.human_reviewed]
     pending_cases = [c.id for c in dataset.cases if not c.human_reviewed]
-    assert len(reviewed_cases) == 15  # EVAL-001 to EVAL-015 approved
-    assert len(pending_cases) == 5    # EVAL-016 to EVAL-020 pending
+    assert len(reviewed_cases) == 20
+    assert len(pending_cases) == 0
+    assert has_unreviewed_cases(dataset) is False
+
+    # Check categories distribution
+    categories = [c.category for c in dataset.cases]
+    assert categories.count("internal") == 5
+    assert categories.count("external") == 5
+    assert categories.count("all") == 5
+    assert categories.count("out_of_domain") == 5
+
+
+def test_verified_dataset_integrity():
+    """Verify evaluation/dataset_verified.json is valid, passes official run validation, and has 20 reviewed cases."""
+    verified_path = Path("evaluation/dataset_verified.json")
+    assert verified_path.is_file()
+
+    dataset = load_dataset(verified_path)
+    assert len(dataset.cases) == 20
+    assert has_unreviewed_cases(dataset) is False
+
+    # Passes official gate without raising
+    validate_dataset_for_official_run(dataset)
 
     # Check categories distribution
     categories = [c.category for c in dataset.cases]

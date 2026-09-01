@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "description": "Borrador de dataset de evaluación controlada para KnowledgeFlow RAG sobre el corpus de NovaTech SpA (ISY0101). Requiere revisión humana previa a uso oficial.",
+  "description": "Dataset de evaluación controlada y verificado humanamente para KnowledgeFlow RAG sobre el corpus de NovaTech SpA (ISY0101).",
   "cases": [
     {
       "id": "EVAL-001",

@@ -371,7 +371,7 @@ python scripts/test_rag_live.py
 
 ## Ejecutar pruebas automatizadas
 
-Ejecutar la suite completa de 130 pruebas automatizadas 100% offline (sin llamadas de red):
+Ejecutar la suite completa de 131 pruebas automatizadas 100% offline (sin llamadas de red):
 
 ```powershell
 python -m pytest -v
