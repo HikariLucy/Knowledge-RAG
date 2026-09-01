@@ -129,7 +129,7 @@ Esta tabla presenta las decisiones de ingeniería adoptadas en el código y las 
 | Decisión Técnica de Ingeniería | Evidencia en Repositorio | Pregunta que el Equipo debe Responder |
 | :--- | :--- | :--- |
 | **Persistencia Vectorial en FAISS (`IndexFlatIP`)** | [`app/rag/vectorstore.py`](../../app/rag/vectorstore.py) | ¿Por qué utilizar búsqueda exacta por producto punto sobre vectores normalizados L2 en lugar de una base de datos vectorial externa pesada? |
-| **Embeddings `gemini-embedding-2` (768d)** | [`app/rag/embeddings.py`](../../app/rag/embeddings.py) | ¿Qué ventajas ofrece la dimensión 768 en términos de expresividad semántica y costo de cómputo para este volumen documental? |
+| **Embeddings `gemini-embedding-2` (768d)** | [`app/rag/embeddings.py`](../../app/rag/embeddings.py) | ¿Qué implicaciones tiene configurar los embeddings en 768 dimensiones para el tamaño de los vectores, la consistencia del índice y el costo computacional, y qué evaluación adicional sería necesaria para compararlo con otras dimensionalidades? |
 | **Top-K = 4** | [`app/core/config.py`](../../app/core/config.py) | ¿Por qué 4 fragmentos representan un equilibrio adecuado entre cobertura contextual y límite de longitud de ventana del LLM? |
 | **Umbral de Similitud $\tau = 0.60$** | [`app/evaluation/threshold_sweep.py`](../../app/evaluation/threshold_sweep.py) | ¿Qué balance experimental sustenta fijar 0.60 frente a umbrales más laxos (0.50/0.55) o más restrictivos (0.75)? |
 | **Desacoplamiento Router (Flash-Lite) vs Generator (Flash)** | [`app/agents/source_router.py`](../../app/agents/source_router.py), [`app/rag/generator.py`](../../app/rag/generator.py) | ¿Por qué asignar una tarea de clasificación de baja complejidad a un modelo liviano y reservar el modelo principal para la síntesis fundamentada? |
@@ -177,10 +177,13 @@ El equipo debe discutir y documentar honestamente las limitaciones del sistema:
 
 Los estudiantes deben completar esta sección de acuerdo con las normativas éticas e institucionales de DuocUC:
 
-- **Herramientas de IA Utilizadas**: `[Completar: ej. Google Antigravity / Gemini / ChatGPT / Copilot]`
-- **Actividades en las que se Emplearon**: `[Completar: ej. Generación de código boilerplate, diseño de pruebas unitarias, formateo de tablas, revisión sintáctica]`
-- **Actividades Realizadas Exclusivamente por los Estudiantes**: `[Completar: ej. Definición de la arquitectura, selección del caso de estudio, análisis de decisiones técnicas, revisión humana del dataset, redacción de conclusiones y defensa oral]`
-- **Declaración de Responsabilidad**: `[Completar: Declaración de autoría y comprensión total del código entregado]`
+- **Herramientas de IA utilizadas**: `[COMPLETAR POR EL EQUIPO]`
+- **Actividades en las que se utilizó asistencia de IA**: `[COMPLETAR POR EL EQUIPO DE FORMA VERAZ Y ESPECÍFICA]`
+- **Decisiones, revisiones y validaciones realizadas por el equipo**: `[COMPLETAR POR EL EQUIPO]`
+- **Partes redactadas personalmente sin generación final por IA**: `[COMPLETAR POR EL EQUIPO]`
+- **Declaración de responsabilidad y comprensión**: `[COMPLETAR POR EL EQUIPO]`
+
+> **Advertencia de Integridad**: La declaración debe reflejar el proceso real. No atribuir como exclusivamente humana una actividad que haya tenido asistencia sustancial de IA.
 
 ---
 
@@ -190,7 +193,8 @@ Los estudiantes deben completar esta sección de acuerdo con las normativas éti
 1. **OWASP LLM Prompt Injection Prevention Cheat Sheet**:
    - *Autor*: OWASP Foundation
    - *Título*: OWASP LLM Prompt Injection Prevention Cheat Sheet
-   - *Año*: 2026 (Consulta: Septiembre 2026)
+   - *Año de publicación*: `[VERIFICAR EN FUENTE OFICIAL]`
+   - *Fecha de consulta*: `2026-09-01`
    - *URL*: `https://cheatsheetseries.owasp.org/cheatsheets/LLM_Prompt_Injection_Prevention_Cheat_Sheet.html`
 2. **NIST SP 800-218 (SSDF Version 1.1)**:
    - *Autor*: National Institute of Standards and Technology (NIST), U.S. Department of Commerce

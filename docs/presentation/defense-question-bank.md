@@ -10,8 +10,8 @@
 ### P1: ¿Por qué una empresa como NovaTech SpA necesita RAG en lugar de consultar directamente un modelo como ChatGPT o Gemini?
 - **EVIDENCIA PARA RESPONDER**: [`../../knowledge/internal/`](../../knowledge/internal/), [`../../README.md`](../../README.md).
 - **PUNTOS QUE EL ESTUDIANTE DEBERÍA PODER EXPLICAR**:
-  - Los modelos base no conocen la información privada, reciente ni interna de la organización (políticas de acceso, procedimientos de guardia de NovaTech).
-  - Consultar un LLM genérico sin RAG induce alucinaciones y respuestas desalineadas con la normativa corporativa vigente.
+  - Un modelo base no constituye una fuente confiable para las políticas privadas del corpus interno y no tiene acceso garantizado a la versión vigente de esos documentos.
+  - Sin recuperación documental previa, aumenta el riesgo de que el modelo emita respuestas no alineadas o sin respaldo en las directivas del caso.
   - RAG aporta trazabilidad documental auditable mediante citas verificables `[S#]`.
 
 ### P2: ¿Qué diferencia existe entre el conocimiento interno y el externo en este proyecto?
@@ -47,11 +47,13 @@
 
 ## 3. Preguntas sobre Embeddings, Vectorstore y FAISS
 
-### P6: ¿Qué es un embedding y por qué se configuró en 768 dimensiones?
+### P6: ¿Por qué el proyecto configuró los embeddings en 768 dimensiones y qué implicaciones tiene esa decisión?
 - **EVIDENCIA PARA RESPONDER**: [`../../app/rag/embeddings.py`](../../app/rag/embeddings.py), [`../../app/core/config.py`](../../app/core/config.py).
 - **PUNTOS QUE EL ESTUDIANTE DEBERÍA PODER EXPLICAR**:
   - Un embedding es una representación vectorial densa que captura el significado semántico del texto en un espacio multidimensional.
-  - La dimensión 768 es la salida nativa del modelo `gemini-embedding-2`, ofreciendo una resolución semántica adecuada para segmentación de párrafos y consultas técnicas.
+  - KnowledgeFlow configura `gemini-embedding-2` para producir vectores de 768 dimensiones mediante el parámetro `output_dimensionality`.
+  - Determina el tamaño de los vectores y del índice FAISS (todos los vectores del corpus y las consultas deben compartir exactamente la misma dimensionalidad).
+  - No se realizó un benchmark experimental comparativo frente a otras dimensiones alternativas.
 
 ### P7: ¿Por qué se utiliza similitud coseno y cómo se implementa en FAISS?
 - **EVIDENCIA PARA RESPONDER**: [`../../app/rag/vectorstore.py`](../../app/rag/vectorstore.py).
@@ -79,13 +81,14 @@
 - **EVIDENCIA PARA RESPONDER**: [`../../app/agents/source_router.py`](../../app/agents/source_router.py) (`_parse_decision`), [`../../tests/test_router.py`](../../tests/test_router.py).
 - **PUNTOS QUE EL ESTUDIANTE DEBERÍA PODER EXPLICAR**:
   - Mecanismo de fallback seguro: ante fallo de parseo JSON, excepción de red o confianza inferior a 0.50, el agente conmuta automáticamente a `source_scope: "all"`.
-  - Esto garantiza que nunca se pierda la recuperación de información por un error del clasificador.
+  - El fallback a `all` amplía la búsqueda a ambos dominios y reduce el riesgo de excluir una procedencia potencialmente relevante cuando el router falla (sin que esto garantice que existan documentos relevantes).
 
 ### P11: ¿Por qué se desacopló el modelo del router (`gemini-3.5-flash-lite`) del generador (`gemini-3.5-flash`)?
 - **EVIDENCIA PARA RESPONDER**: [`../../app/core/config.py`](../../app/core/config.py), [`../../tests/test_model_separation.py`](../../tests/test_model_separation.py).
 - **PUNTOS QUE EL ESTUDIANTE DEBERÍA PODER EXPLICAR**:
   - La clasificación de ámbito es una tarea liviana que no requiere la capacidad generativa del modelo principal.
-  - Permite reducir la latencia de respuesta y optimizar el consumo de solicitudes por modelo en la cuota diaria (RPD).
+  - El desacoplamiento fue diseñado para asignar la tarea ligera de clasificación a Flash-Lite y reservar Flash para la síntesis fundamentada, separando además el consumo de solicitudes por modelo.
+  - Tiene como objetivo de diseño buscar una latencia potencialmente menor en el enrutamiento, aunque no se ejecutó una medición formal comparativa de tiempos de respuesta.
 
 ---
 
@@ -112,9 +115,9 @@
 - **EVIDENCIA PARA RESPONDER**: [`../../app/rag/pipeline.py`](../../app/rag/pipeline.py).
 - **PUNTOS QUE EL ESTUDIANTE DEBERÍA PODER EXPLICAR**:
   - Si tras la búsqueda vectorial y el filtrado por umbral no queda ningún fragmento con similitud $\ge 0.60$, el pipeline retorna inmediatamente `abstained=True`, `citations=[]`, `sources=[]`.
-  - Evita llamar al LLM generativo, ahorrando cuota/costo y erradicando respuestas inventadas cuando no hay respaldo.
+  - Evita llamar al LLM generativo, ahorrando cuota y reduciendo el riesgo de generar respuestas sin respaldo cuando ningún fragmento supera el umbral.
 
-### P15: ¿Cómo se garantiza la seguridad en la interfaz web (prevención de XSS)?
+### P15: ¿Cómo se protege la interfaz web frente a riesgos de XSS?
 - **EVIDENCIA PARA RESPONDER**: [`../../app/ui/static/app.js`](../../app/ui/static/app.js) (`renderGroundedText`).
 - **PUNTOS QUE EL ESTUDIANTE DEBERÍA PODER EXPLICAR**:
   - No se utiliza `innerHTML` para inyectar las respuestas del modelo.
@@ -133,5 +136,5 @@
 ### P17: ¿Qué parte del proyecto quedó pendiente y cuál fue el motivo técnico?
 - **EVIDENCIA PARA RESPONDER**: [`../evidence/evaluation-evidence.md`](../evidence/evaluation-evidence.md).
 - **PUNTOS QUE EL ESTUDIANTE DEBERÍA PODER EXPLICAR**:
-  - La corrida automatizada oficial generativa end-to-end de los 20 casos quedó en estado `PENDING` debido al límite diario de 20 RPD en Google Gemini Free Tier (`GenerateRequestsPerDayPerProjectPerModel-FreeTier`).
+  - Durante las corridas live se observó un límite Free Tier de 20 RPD para `gemini-3.5-flash` (`quotaId: GenerateRequestsPerDayPerProjectPerModel-FreeTier`), lo cual dejó en estado `PENDING` la ejecución completa de los 20 casos consecutivos.
   - Toda la infraestructura de software, dataset, runner y calibración de umbrales está completamente terminada y testeada con 158 pruebas offline.
