@@ -71,7 +71,14 @@ El estado actual del proyecto cubre la **Fundación Técnica**, la **Ingesta Doc
   - **Endpoint REST (`POST /api/query`)**: expone el pipeline RAG vía FastAPI con ciclo de vida optimizado (vector store cargado en memoria) y respuesta HTTP 503 controlada si el índice no existe o está desactualizado.
   - **CLI de Consulta Completa (`python -m app.rag.ask`)**: interfaz interactiva para consultar el pipeline RAG y visualizar respuestas, citas y fuentes.
   - **Suite de Pruebas**: 108 pruebas automatizadas 100% offline con proveedores fake deterministas (`FakeSourceRouter`, `FakeRAGGenerator`, `DeterministicFakeEmbeddings`).
-  - **Scripts de Verificación Live**: `scripts/test_gemini_chat.py` y `scripts/test_rag_live.py`.
+- **Fase 4 — Evaluación Sistemática, Dataset Controlado y Métricas Reproducibles**:
+  - **Dataset Controlado y Puerta de Revisión Humana**: dataset estructurado con 20 casos controlados (`evaluation/dataset_draft.json` con `human_reviewed=false`). Esquema estricto Pydantic (`EvaluationCase`, `EvaluationDataset`) con puerta humana requerida para corridas oficiales (`--require-reviewed`).
+  - **Métricas Deterministas de Routing**: Router Accuracy y Matriz de Confusión $3 \times 3$ excluyendo consultas fuera de dominio (`expected_scope=null`).
+  - **Métricas de Recuperación a Nivel de Archivo**: `Hit@K`, `Mean Reciprocal Rank (MRR)`, `Expected Source Recall@K`, cumplimiento de ámbito y cobertura dual balanceada para consultas `all`.
+  - **Métricas de Abstención Estandarizadas**: matriz de confusión (TP, FP, TN, FN con abstención como clase positiva), exactitud, precisión y recall.
+  - **Métricas de Integridad de Citas y Trazabilidad Contractual**: verificación de citas obligatorias válidas $\ge 1$, resolución estricta contra fuentes recuperadas y cálculo de `Traceable Answer Success Rate`.
+  - **Herramienta de Barrido de Umbrales (`threshold_sweep`)**: calibración paramétrica de umbrales `[0.50..0.75]` ejecutando retrieval una sola vez en memoria sin llamadas redundantes al LLM ni mutación de configuración.
+  - **Runner de Evaluación y Reportes Reproducibles**: CLI (`python -m app.evaluation.runner`) con trazabilidad completa de Git (commit hash, dirty flag), modelos y huella del vectorstore, generando reportes en JSON y Markdown.
 
 ---
 
@@ -110,9 +117,19 @@ flowchart TD
         REP -->|Falla persistente| OUT
     end
 
+    subgraph Fase_4["Fase 4: Evaluación Sistemática y Métricas"]
+        DS["Dataset Controlado\n(dataset_draft.json)"] --> GATE{"¿Human Reviewed?"}
+        GATE -->|Exploratorio| RUNNER["Evaluation Runner\n(app.evaluation.runner)"]
+        GATE -->|Verificado| RUNNER
+        RUNNER --> MET["Métricas Deterministas\n(Routing, Hit@K, MRR, Abstention, Citations)"]
+        RUNNER --> SWEEP["Threshold Sweep\n(app.evaluation.threshold_sweep)"]
+        RUNNER --> OUT_REP["Reportes Reproducibles\n(JSON + Markdown en evaluation/results/)"]
+    end
+
     style Fase_1 fill:#e1f5fe,stroke:#0288d1,stroke-width:2px
     style Fase_2 fill:#e8f5e9,stroke:#388e3c,stroke-width:2px
     style Fase_3 fill:#fff3e0,stroke:#f57c00,stroke-width:2px
+    style Fase_4 fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px
 ```
 
 ---
@@ -136,6 +153,14 @@ Knowledge-RAG/
 │   ├── llm/
 │   │   ├── __init__.py
 │   │   └── client.py        # Cliente desacoplado para Google Gemini
+│   ├── evaluation/
+│   │   ├── __init__.py      # Exportaciones del framework de evaluación
+│   │   ├── schemas.py       # Modelos Pydantic de casos, datasets y reportes
+│   │   ├── dataset.py       # Cargador, validador y compuerta de revisión humana
+│   │   ├── metrics.py       # Funciones puras de cálculo de métricas de evaluación
+│   │   ├── runner.py        # CLI de evaluación end-to-end con trazabilidad Git
+│   │   ├── reporter.py      # Generador de reportes en JSON y Markdown
+│   │   └── threshold_sweep.py # Herramienta de calibración y barrido de similitud
 │   └── rag/
 │       ├── __init__.py      # Exportaciones públicas de RAG
 │       ├── schemas.py       # Modelos Pydantic (RAGAnswer, RouteDecision, SourceReference, etc.)
@@ -151,6 +176,11 @@ Knowledge-RAG/
 │       ├── indexer.py       # CLI para carga, chunking, embedding e indexación
 │       ├── search.py        # CLI de demostración de recuperación semántica
 │       └── ask.py           # CLI interactivo de consulta RAG con respuestas fundamentadas
+├── evaluation/
+│   ├── dataset_draft.json   # Dataset borrador controlado de 20 casos
+│   ├── README.md            # Guía de evaluación y compuerta de revisión humana
+│   └── results/             # Directorio de reportes JSON y resúmenes Markdown
+│       └── .gitkeep
 ├── knowledge/
 │   ├── internal/            # Políticas, procedimientos y normativas internas (NovaTech SpA)
 │   └── external/            # Normativas, guías técnicas y estándares de la industria
@@ -167,14 +197,18 @@ Knowledge-RAG/
 │   ├── test_config_llm.py   # Pruebas de configuración y cliente LLM
 │   ├── test_embeddings.py   # Pruebas de preparación y proveedor de embeddings
 │   ├── test_vectorstore.py  # Pruebas de FAISS, métricas, filtros y persistencia
-│   ├── test_retriever.py   # Pruebas del pipeline de recuperación
+│   ├── test_retriever.py    # Pruebas del pipeline de recuperación
 │   ├── test_router.py       # Pruebas del agente de enrutamiento y fallbacks
 │   ├── test_prompts.py      # Pruebas del system prompt y encapsulamiento XML
 │   ├── test_context.py      # Pruebas de construcción de contexto y validación de citas
 │   ├── test_security.py     # Pruebas de mitigación de prompt injection
 │   ├── test_generator.py    # Pruebas del generador y ciclo de reparación
 │   ├── test_pipeline.py     # Pruebas de orquestación, retrieval balanceado y abstención
-│   └── test_api.py          # Pruebas de endpoints FastAPI (POST /api/query)
+│   ├── test_api.py          # Pruebas de endpoints FastAPI (POST /api/query)
+│   ├── test_evaluation_dataset.py  # Pruebas de esquemas y validación de datasets
+│   ├── test_evaluation_metrics.py  # Pruebas de cálculo matemático de métricas
+│   ├── test_evaluation_runner.py   # Pruebas de ejecución del runner de evaluación
+│   └── test_threshold_sweep.py     # Pruebas de barrido y calibración de umbrales
 ├── .env.example             # Plantilla de variables de entorno
 ├── .gitignore               # Exclusiones de Git (entornos, vectorstore, caches, .env)
 ├── pytest.ini               # Configuración de pruebas automatizadas
@@ -303,6 +337,19 @@ uvicorn app.main:app --reload --port 8000
   ```
 - **Documentación Swagger**: `http://localhost:8000/docs`
 
+### 4. Evaluación Sistemática y Calibración de Umbrales
+
+```powershell
+# A. Ejecución exploratoria sobre dataset borrador controlado
+python -m app.evaluation.runner --dataset evaluation/dataset_draft.json
+
+# B. Ejecución oficial estricta (requiere dataset revisado humanamente y working tree limpio)
+python -m app.evaluation.runner --dataset evaluation/dataset_verified.json --require-reviewed --require-clean
+
+# C. Barrido de umbrales de similitud (Threshold Sweep sin llamadas redundantes al LLM)
+python -m app.evaluation.threshold_sweep --dataset evaluation/dataset_draft.json
+```
+
 ---
 
 ## Verificación de API Gemini en Vivo
@@ -324,7 +371,7 @@ python scripts/test_rag_live.py
 
 ## Ejecutar pruebas automatizadas
 
-Ejecutar la suite completa de 108 pruebas automatizadas 100% offline (sin llamadas de red):
+Ejecutar la suite completa de 125 pruebas automatizadas 100% offline (sin llamadas de red):
 
 ```powershell
 python -m pytest -v
