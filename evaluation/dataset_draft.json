@@ -178,7 +178,7 @@
       ],
       "expected_behavior": "grounded_answer",
       "notes": "Consulta comparativa entre requisitos internos de contraseña y manejo seguro de secretos externo.",
-      "human_reviewed": false
+      "human_reviewed": true
     },
     {
       "id": "EVAL-012",
@@ -196,7 +196,7 @@
       ],
       "expected_behavior": "grounded_answer",
       "notes": "Consulta mixta: almacenamiento institucional en la nube (FAQ interna) y cifrado AES-256 (referencia externa).",
-      "human_reviewed": false
+      "human_reviewed": true
     },
     {
       "id": "EVAL-013",
@@ -214,7 +214,7 @@
       ],
       "expected_behavior": "grounded_answer",
       "notes": "Consulta mixta: aislamiento y volcado de RAM (procedimiento interno) y log inmutable de auditoría (referencia externa).",
-      "human_reviewed": false
+      "human_reviewed": true
     },
     {
       "id": "EVAL-014",
@@ -232,7 +232,7 @@
       ],
       "expected_behavior": "grounded_answer",
       "notes": "Consulta comparativa sobre menor privilegio interno (politica_accesos.md) y auditoría externa (referencia_seguridad.txt).",
-      "human_reviewed": false
+      "human_reviewed": true
     },
     {
       "id": "EVAL-015",
@@ -250,7 +250,7 @@
       ],
       "expected_behavior": "grounded_answer",
       "notes": "Consulta mixta: post-mortem a los 3 días hábiles (interno) y documentación arquitectural trazable (externo).",
-      "human_reviewed": false
+      "human_reviewed": true
     },
     {
       "id": "EVAL-016",
