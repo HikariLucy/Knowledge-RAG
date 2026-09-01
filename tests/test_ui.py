@@ -14,6 +14,9 @@ def test_ui_root_endpoint_serves_html():
     assert "text/html" in response.headers.get("content-type", "")
     assert "KnowledgeFlow" in response.text
     assert "Consulta de conocimiento" in response.text
+    assert "QUERY / 01" in response.text
+    assert "MOTOR DE CONOCIMIENTO" in response.text
+    assert "CONSULTAS DE REFERENCIA" in response.text
     assert "EVIDENCIA RECUPERADA" in response.text.upper()
 
 

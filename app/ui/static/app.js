@@ -14,6 +14,8 @@ document.addEventListener("DOMContentLoaded", () => {
   const errorMessage = document.getElementById("error-message");
   const retryBtn = document.getElementById("retry-btn");
   const resultsArea = document.getElementById("results-area");
+  const pipelineGuide = document.getElementById("pipeline-guide");
+  const scopeLegend = document.getElementById("scope-legend");
 
   // Results & Traceability Elements
   const answerHeading = document.getElementById("answer-heading");
@@ -35,19 +37,32 @@ document.addEventListener("DOMContentLoaded", () => {
   const evidenceCountBadge = document.getElementById("evidence-count-badge");
   const evidenceEmpty = document.getElementById("evidence-empty");
 
-  // Example Chips
-  const chipButtons = document.querySelectorAll(".chip-btn");
+  // Reference Query Buttons & Scope Inputs
+  const referenceButtons = document.querySelectorAll(".ref-item-btn, .chip-btn");
+  const scopeRadios = document.querySelectorAll('input[name="source_scope"]');
 
   let lastPayload = null;
   let activeHighlightTimeout = null;
 
-  // Initialize Example Chips
-  chipButtons.forEach((chip) => {
-    chip.addEventListener("click", () => {
-      const queryText = chip.getAttribute("data-query");
+  // Initialize Reference Query Buttons
+  referenceButtons.forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const queryText = btn.getAttribute("data-query");
       if (queryText) {
         queryInput.value = queryText;
         queryInput.focus();
+      }
+    });
+  });
+
+  // Scope Selector Legend Live Update
+  scopeRadios.forEach((radio) => {
+    radio.addEventListener("change", () => {
+      if (radio.checked && scopeLegend) {
+        const legendText = radio.getAttribute("data-legend");
+        if (legendText) {
+          scopeLegend.textContent = legendText;
+        }
       }
     });
   });
@@ -96,6 +111,9 @@ document.addEventListener("DOMContentLoaded", () => {
     hideError();
     showLoading(true);
     resultsArea.classList.add("hidden");
+    if (pipelineGuide) {
+      pipelineGuide.classList.add("hidden");
+    }
 
     try {
       const response = await fetch("/api/query", {
@@ -368,6 +386,9 @@ document.addEventListener("DOMContentLoaded", () => {
     errorTitle.textContent = title;
     errorMessage.textContent = message;
     errorState.classList.remove("hidden");
+    if (pipelineGuide) {
+      pipelineGuide.classList.remove("hidden");
+    }
     errorState.scrollIntoView({ behavior: "smooth", block: "nearest" });
   }
 
