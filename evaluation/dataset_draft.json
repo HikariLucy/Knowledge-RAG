@@ -92,12 +92,11 @@
         "external"
       ],
       "expected_files": [
-        "referencia_seguridad.txt",
-        "nist_privacy_framework_data_minimization.md"
+        "referencia_seguridad.txt"
       ],
       "expected_behavior": "grounded_answer",
-      "notes": "Estándar externo: TLS 1.3 en tránsito y AES-256 en reposo (NIST Privacy Framework PR.DS-P y referencia pedagógica).",
-      "human_reviewed": false
+      "notes": "Estándar externo: TLS 1.3 en tránsito y AES-256 en reposo.",
+      "human_reviewed": true
     },
     {
       "id": "EVAL-007",
@@ -113,7 +112,7 @@
         "owasp_llm_prompt_injection_prevention.md"
       ],
       "expected_behavior": "grounded_answer",
-      "notes": "Referencia de seguridad: validar y sanitizar prompts de entrada, separación de control/datos y filtrar PII (OWASP LLM Cheat Sheet).",
+      "notes": "Referencia de seguridad: validar y sanitizar prompts de entrada, separación de planos de control y datos (OWASP LLM Prompt Injection Prevention Cheat Sheet).",
       "human_reviewed": false
     },
     {
@@ -126,12 +125,11 @@
         "external"
       ],
       "expected_files": [
-        "guia_buenas_practicas.md",
-        "nist_sp_800_218_ssdf.md"
+        "guia_buenas_practicas.md"
       ],
       "expected_behavior": "grounded_answer",
-      "notes": "Guía externa: no almacenar secretos en código fuente, usar variables de entorno y .env.example (NIST SP 800-218 PS.1).",
-      "human_reviewed": false
+      "notes": "Guía externa: no almacenar secretos en código fuente, usar variables de entorno y .env.example.",
+      "human_reviewed": true
     },
     {
       "id": "EVAL-009",
@@ -143,12 +141,11 @@
         "external"
       ],
       "expected_files": [
-        "guia_buenas_practicas.md",
-        "nist_sp_800_218_ssdf.md"
+        "guia_buenas_practicas.md"
       ],
       "expected_behavior": "grounded_answer",
-      "notes": "Guía externa: priorizar pruebas unitarias rápidas y deterministas sobre servicios externos (NIST SP 800-218 PW.8).",
-      "human_reviewed": false
+      "notes": "Guía externa: priorizar pruebas unitarias rápidas y deterministas sobre servicios externos.",
+      "human_reviewed": true
     },
     {
       "id": "EVAL-010",
@@ -164,7 +161,7 @@
         "nist_privacy_framework_data_minimization.md"
       ],
       "expected_behavior": "grounded_answer",
-      "notes": "Referencia de seguridad: recolectar solo datos necesarios y aplicar políticas de expiración y purga (NIST Privacy Framework CT.DM-P / CT.DP-P).",
+      "notes": "Referencia de seguridad: principio de minimización de datos para recolección, políticas de acceso para eliminación (CT.DM-P4) y destrucción conforme a políticas (CT.DM-P5).",
       "human_reviewed": false
     },
     {
@@ -179,12 +176,11 @@
       ],
       "expected_files": [
         "politica_accesos.md",
-        "guia_buenas_practicas.md",
-        "nist_sp_800_218_ssdf.md"
+        "guia_buenas_practicas.md"
       ],
       "expected_behavior": "grounded_answer",
-      "notes": "Consulta comparativa entre requisitos internos de contraseña y manejo seguro de secretos externo (NIST SP 800-218).",
-      "human_reviewed": false
+      "notes": "Consulta comparativa entre requisitos internos de contraseña y manejo seguro de secretos externo.",
+      "human_reviewed": true
     },
     {
       "id": "EVAL-012",
@@ -198,12 +194,11 @@
       ],
       "expected_files": [
         "faq_interna.txt",
-        "referencia_seguridad.txt",
-        "nist_privacy_framework_data_minimization.md"
+        "referencia_seguridad.txt"
       ],
       "expected_behavior": "grounded_answer",
-      "notes": "Consulta mixta: almacenamiento institucional en la nube (FAQ interna) y cifrado AES-256 (NIST Privacy Framework PR.DS-P).",
-      "human_reviewed": false
+      "notes": "Consulta mixta: almacenamiento institucional en la nube (FAQ interna) y cifrado AES-256 (referencia externa).",
+      "human_reviewed": true
     },
     {
       "id": "EVAL-013",
@@ -257,7 +252,7 @@
         "nist_sp_800_218_ssdf.md"
       ],
       "expected_behavior": "grounded_answer",
-      "notes": "Consulta mixta: post-mortem a los 3 días hábiles (interno) y documentación arquitectural / respuesta a incidentes NIST RV.1 (externo).",
+      "notes": "Consulta mixta: post-mortem a los 3 días hábiles (interno) y análisis de causa raíz y lecciones aprendidas según NIST SSDF RV.3 (externo).",
       "human_reviewed": false
     },
     {
