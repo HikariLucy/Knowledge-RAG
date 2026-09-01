@@ -364,7 +364,7 @@ Características de la interfaz:
 ### 5. UI Preview sin Gemini (Modo de Desarrollo Offline)
 
 > [!NOTE]
-> Este modo sirve **únicamente para revisar estados de interfaz de usuario** durante el desarrollo y **no ejecuta el pipeline RAG real ni consume cuota de Google Gemini API**.
+> Este modo sirve **únicamente para revisar estados de interfaz de usuario** durante el desarrollo y **no ejecuta el pipeline RAG real ni consume cuota de Google Gemini API**. Los documentos referenciados corresponden al corpus real del proyecto, mientras que los scores de similitud son valores ilustrativos utilizados exclusivamente para validar la presentación de la interfaz.
 
 Para iniciar el servidor de preview con respuestas controladas (`tests/fixtures/ui_preview_responses.json`):
 

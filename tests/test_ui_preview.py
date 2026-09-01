@@ -1,5 +1,6 @@
-"""Offline unit tests for UI Preview Server and fixture validation."""
+"""Offline unit tests for UI Preview Server, fixture validation, and corpus fidelity."""
 
+from pathlib import Path
 import pytest
 from fastapi.testclient import TestClient
 
@@ -9,6 +10,8 @@ from scripts.ui_preview import app as preview_app, FIXTURES_PATH, PreviewRAGPipe
 
 preview_client = TestClient(preview_app)
 prod_client = TestClient(prod_app)
+
+KNOWLEDGE_ROOT = Path(__file__).resolve().parent.parent / "knowledge"
 
 
 def test_production_app_is_not_polluted_by_preview_import():
@@ -29,6 +32,44 @@ def test_preview_fixtures_file_exists_and_validates():
         assert response_model.source_scope in ["internal", "external", "all"]
 
 
+def test_preview_fixtures_corpus_fidelity():
+    """Verify that every source in every fixture exists in the real knowledge corpus."""
+    pipeline = PreviewRAGPipeline(FIXTURES_PATH)
+    disallowed_filenames = {
+        "politica_contrasenas.md",
+        "procedimiento_seguridad.md",
+        "owasp_top_10_llm_overview.md",
+    }
+
+    for scenario_name, scenario in pipeline.fixtures.items():
+        sources = scenario.get("sources", [])
+        for src in sources:
+            file_name = src["file_name"]
+            source_type = src["source_type"]
+
+            # 1. Assert file is not among invented/disallowed names
+            assert file_name not in disallowed_filenames, f"Found disallowed file '{file_name}' in scenario '{scenario_name}'"
+
+            # 2. Assert physical file actually exists under knowledge/{source_type}/
+            expected_path = KNOWLEDGE_ROOT / source_type / file_name
+            assert expected_path.exists(), f"Corpus file '{expected_path}' does not exist for scenario '{scenario_name}'"
+
+
+def test_preview_internal_fixture_content_fidelity():
+    """Verify that internal password fixture is faithful to politica_accesos.md."""
+    pipeline = PreviewRAGPipeline(FIXTURES_PATH)
+    internal_scenario = pipeline.fixtures["internal"]
+
+    # Must use politica_accesos.md
+    assert internal_scenario["sources"][0]["file_name"] == "politica_accesos.md"
+
+    # Must mention 14 caracteres, MFA, and NOT invent 12 caracteres or 'últimas 5'
+    answer_text = internal_scenario["answer"]
+    assert "14 caracteres" in answer_text
+    assert "12 caracteres" not in answer_text
+    assert "últimas 5" not in answer_text
+
+
 def test_preview_ui_root_serves_html():
     """Verify GET / on preview app returns 200 with UI HTML."""
     response = preview_client.get("/")
@@ -47,7 +88,7 @@ def test_preview_health_endpoint():
 
 
 def test_preview_scenario_a_internal():
-    """Verify preview returns internal scenario with S1 and S2."""
+    """Verify preview returns internal scenario with politica_accesos.md and S1 citation."""
     response = preview_client.post(
         "/api/query",
         json={"query": "¿Qué requisitos deben cumplir las contraseñas internas?"},
@@ -57,12 +98,13 @@ def test_preview_scenario_a_internal():
     assert data["source_scope"] == "internal"
     assert data["abstained"] is False
     assert "S1" in data["citations"]
-    assert len(data["sources"]) >= 2
+    assert len(data["sources"]) >= 1
+    assert data["sources"][0]["file_name"] == "politica_accesos.md"
     assert all(s["source_type"] == "internal" for s in data["sources"])
 
 
 def test_preview_scenario_b_external():
-    """Verify preview returns external scenario with OWASP sources."""
+    """Verify preview returns external scenario with real OWASP source."""
     response = preview_client.post(
         "/api/query",
         json={"query": "¿Cómo se previene Prompt Injection según OWASP?"},
@@ -72,7 +114,8 @@ def test_preview_scenario_b_external():
     assert data["source_scope"] == "external"
     assert data["abstained"] is False
     assert "S1" in data["citations"]
-    assert any("owasp" in s["file_name"] for s in data["sources"])
+    assert data["sources"][0]["file_name"] == "owasp_llm_prompt_injection_prevention.md"
+    assert all(s["source_type"] == "external" for s in data["sources"])
 
 
 def test_preview_scenario_c_mixed():
@@ -88,6 +131,8 @@ def test_preview_scenario_c_mixed():
     source_types = {s["source_type"] for s in data["sources"]}
     assert "internal" in source_types
     assert "external" in source_types
+    assert any(s["file_name"] == "procedimiento_incidentes.md" for s in data["sources"])
+    assert any(s["file_name"] == "nist_sp_800_218_ssdf.md" for s in data["sources"])
 
 
 def test_preview_scenario_d_abstention():
@@ -104,16 +149,24 @@ def test_preview_scenario_d_abstention():
 
 
 def test_preview_scenario_e_density():
-    """Verify preview returns 4 sources and 4 citations for density scenario."""
+    """Verify preview returns 4 real sources and 4 citations for density scenario."""
     response = preview_client.post(
         "/api/query",
-        json={"query": "Auditoría completa y densidad de citas"},
+        json={"query": "Auditoría integral de accesos, incidentes, inyección de prompts y desarrollo seguro"},
     )
     assert response.status_code == 200
     data = response.json()
     assert data["abstained"] is False
     assert len(data["sources"]) == 4
     assert len(data["citations"]) == 4
+
+    file_names = [s["file_name"] for s in data["sources"]]
+    assert file_names == [
+        "politica_accesos.md",
+        "procedimiento_incidentes.md",
+        "owasp_llm_prompt_injection_prevention.md",
+        "nist_sp_800_218_ssdf.md",
+    ]
 
 
 def test_preview_error_500_trigger():
