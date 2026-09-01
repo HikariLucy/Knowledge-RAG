@@ -1,0 +1,126 @@
+{
+  "_comment": "UI DEVELOPMENT FIXTURES — Explicitly curated for offline UI preview and state validation. NOT official benchmark results, NOT live evaluation data.",
+  "scenarios": {
+    "internal": {
+      "query": "¿Qué requisitos deben cumplir las contraseñas internas?",
+      "source_scope": "internal",
+      "answer": "De acuerdo con la política interna de NovaTech [S1], las contraseñas deben tener una longitud mínima de 12 caracteres, combinar mayúsculas, minúsculas, números y caracteres especiales, y renovarse periódicamente. Asimismo, el procedimiento operativo [S2] prohíbe estrictamente la reutilización de las últimas 5 contraseñas registradas.",
+      "citations": ["S1", "S2"],
+      "sources": [
+        {
+          "id": "S1",
+          "file_name": "politica_contrasenas.md",
+          "source_type": "internal",
+          "chunk_index": 0,
+          "score": 0.842
+        },
+        {
+          "id": "S2",
+          "file_name": "procedimiento_seguridad.md",
+          "source_type": "internal",
+          "chunk_index": 2,
+          "score": 0.765
+        }
+      ],
+      "abstained": false
+    },
+    "external": {
+      "query": "¿Cómo se previene Prompt Injection según OWASP?",
+      "source_scope": "external",
+      "answer": "Según las directivas de OWASP para aplicaciones con LLM [S1], la prevención de Prompt Injection requiere tratar todo input externo como dato pasivo no confiable y aplicar delimitadores estructurales estrictos. Además, la guía de mitigación [S2] recomienda validar y sanitizar los payloads antes de ser incorporados al contexto del modelo.",
+      "citations": ["S1", "S2"],
+      "sources": [
+        {
+          "id": "S1",
+          "file_name": "owasp_llm_prompt_injection_prevention.md",
+          "source_type": "external",
+          "chunk_index": 1,
+          "score": 0.819
+        },
+        {
+          "id": "S2",
+          "file_name": "owasp_top_10_llm_overview.md",
+          "source_type": "external",
+          "chunk_index": 0,
+          "score": 0.741
+        }
+      ],
+      "abstained": false
+    },
+    "mixed": {
+      "query": "Compara el procedimiento interno de incidentes con buenas prácticas externas.",
+      "source_scope": "all",
+      "answer": "El procedimiento interno de NovaTech [S1] establece que los incidentes de seguridad deben notificarse de inmediato a la guardia operativa vía correo o ticket de alta severidad. En contraste y complemento, el estándar NIST SSDF [S2] define prácticas formales para la contención rápida y análisis de causa raíz, mientras que las directrices NIST de privacidad [S3] exigen mitigar cualquier filtración de datos sensibles durante la remediación.",
+      "citations": ["S1", "S2", "S3"],
+      "sources": [
+        {
+          "id": "S1",
+          "file_name": "procedimiento_incidentes.md",
+          "source_type": "internal",
+          "chunk_index": 1,
+          "score": 0.835
+        },
+        {
+          "id": "S2",
+          "file_name": "nist_sp_800_218_ssdf.md",
+          "source_type": "external",
+          "chunk_index": 0,
+          "score": 0.792
+        },
+        {
+          "id": "S3",
+          "file_name": "nist_privacy_framework_data_minimization.md",
+          "source_type": "external",
+          "chunk_index": 2,
+          "score": 0.728
+        }
+      ],
+      "abstained": false
+    },
+    "abstention": {
+      "query": "¿Cuál es la velocidad de la luz en el vacío?",
+      "source_scope": "all",
+      "answer": "No encontré evidencia documental suficiente en el corpus institucional ni en los estándares técnicos vinculados para responder a esta consulta con el nivel de respaldo requerido.",
+      "citations": [],
+      "sources": [],
+      "abstained": true
+    },
+    "density": {
+      "query": "Auditoría completa de seguridad, contraseñas, inyecciones y respuesta a incidentes",
+      "source_scope": "all",
+      "answer": "El marco de seguridad corporativo exige autenticación robusta según la política de contraseñas [S1] y protección activa contra inyecciones de contexto basada en OWASP [S2]. Ante eventos anómalos, se aplica el protocolo de notificación interna [S3] alineado con las fases de respuesta de incidentes de NIST [S4].",
+      "citations": ["S1", "S2", "S3", "S4"],
+      "sources": [
+        {
+          "id": "S1",
+          "file_name": "politica_contrasenas.md",
+          "source_type": "internal",
+          "chunk_index": 0,
+          "score": 0.865
+        },
+        {
+          "id": "S2",
+          "file_name": "owasp_llm_prompt_injection_prevention.md",
+          "source_type": "external",
+          "chunk_index": 1,
+          "score": 0.824
+        },
+        {
+          "id": "S3",
+          "file_name": "procedimiento_incidentes.md",
+          "source_type": "internal",
+          "chunk_index": 2,
+          "score": 0.781
+        },
+        {
+          "id": "S4",
+          "file_name": "nist_sp_800_218_ssdf.md",
+          "source_type": "external",
+          "chunk_index": 3,
+          "score": 0.753
+        }
+      ],
+      "abstained": false
+    }
+  }
+}

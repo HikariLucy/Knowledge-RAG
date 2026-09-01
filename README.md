@@ -338,28 +338,57 @@ uvicorn app.main:app --reload --port 8000
   ```
 - **Documentación Swagger**: `http://localhost:8000/docs`
 
-### 4. Interfaz Web (KnowledgeFlow UI)
+### 4. Interfaz Web (Ejecución Real)
 
-KnowledgeFlow RAG incluye una consola web de consulta y trazabilidad documental servida directamente desde FastAPI:
+KnowledgeFlow RAG incluye una consola web de consulta y trazabilidad documental servida directamente desde FastAPI con el pipeline RAG real:
 
 ```powershell
-python -m uvicorn app.main:app --reload
+python -m uvicorn app.main:app --reload --host 127.0.0.1 --port 8010
 ```
 
 Abrir en el navegador:
 ```text
-http://127.0.0.1:8000/
+http://127.0.0.1:8010/
 ```
 
 Características de la interfaz:
-- **Espacio de Consulta**: Input amplio con selector de alcance (`AUTOMÁTICO`, `INTERNO`, `EXTERNO`, `AMBOS`) y chips con preguntas sugeridas.
+- **Espacio de Consulta**: Input amplio con selector de alcance (`AUTO`, `INT`, `EXT`, `INT + EXT`) y consultas de referencia sugeridas.
 - **Respuesta Fundamentada**: Renderizado tipográfico editorial con insignias interactivas `[S1]`, `[S2]` que resaltan la evidencia vinculada.
 - **Libro Mayor de Evidencia (Evidence Ledger)**: Panel lateral que lista cada fragmento recuperado con su identificador `S#`, procedencia (`[INT] INTERNA` / `[EXT] EXTERNA`), archivo fuente, índice de fragmento y puntaje de similitud coseno (`Similitud`).
 - **Franja de Trazabilidad**: Indicadores directos del alcance aplicado, total de fuentes recuperadas, citas aplicadas y estado de fundamentación.
 - **Manejo Seguro de Abstención**: Estado visual diferenciado ante evidencia insuficiente (`Similitud < 0.60`), comunicando el comportamiento de seguridad sin emitir alucinaciones.
 - **Trazabilidad Técnica Desplegable**: Vista estructurada de los datos contractuales retornados por `QueryResponse`.
 
-### 5. Evaluación Sistemática y Calibración de Umbrales
+---
+
+### 5. UI Preview sin Gemini (Modo de Desarrollo Offline)
+
+> [!NOTE]
+> Este modo sirve **únicamente para revisar estados de interfaz de usuario** durante el desarrollo y **no ejecuta el pipeline RAG real ni consume cuota de Google Gemini API**.
+
+Para iniciar el servidor de preview con respuestas controladas (`tests/fixtures/ui_preview_responses.json`):
+
+```powershell
+python -m uvicorn scripts.ui_preview:app --reload --host 127.0.0.1 --port 8010
+```
+
+Abrir en el navegador:
+```text
+http://127.0.0.1:8010/
+```
+
+**Consultas para verificar cada estado visual:**
+- **Estado Interno (`INT`)**: `¿Qué requisitos deben cumplir las contraseñas internas?`
+- **Estado Externo (`EXT`)**: `¿Cómo se previene Prompt Injection según OWASP?`
+- **Estado Mixto (`INT + EXT`)**: `Compara el procedimiento interno de incidentes con buenas prácticas externas.`
+- **Estado de Abstención**: `¿Cuál es la velocidad de la luz en el vacío?`
+- **Alta Densidad de Citas (4 evidencias / 4 citas)**: `Auditoría completa y densidad de citas`
+- **Simulación de Error 500**: `PREVIEW_ERROR_500`
+- **Simulación de Error 503**: `PREVIEW_ERROR_503`
+
+---
+
+### 6. Evaluación Sistemática y Calibración de Umbrales
 
 ```powershell
 # A. Ejecución exploratoria sobre dataset borrador controlado

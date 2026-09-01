@@ -97,6 +97,8 @@ async def query_rag(
             top_k=request.k,
         )
         return QueryResponse(**answer.model_dump())
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error("Error executing RAG pipeline: %s", e)
         raise HTTPException(
