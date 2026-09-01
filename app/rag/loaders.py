@@ -15,14 +15,22 @@ SUPPORTED_EXTENSIONS = {".txt", ".md", ".pdf"}
 
 
 def infer_source_type(file_path: Union[str, Path]) -> SourceType:
-    """Infer whether a file belongs to 'internal' or 'external' sources based on its path."""
+    """Infer whether a file belongs to 'internal' or 'external' sources based on its path.
+
+    Raises:
+        ValueError: If neither 'internal' nor 'external' is present in path parts.
+    """
     path_obj = Path(file_path)
     parts = [part.lower() for part in path_obj.parts]
     if "internal" in parts:
         return "internal"
     if "external" in parts:
         return "external"
-    return "internal"
+    raise ValueError(
+        f"Cannot infer source_type for path '{file_path}'. "
+        "Path must reside inside an 'internal' or 'external' directory, "
+        "or source_type must be explicitly provided."
+    )
 
 
 def load_text_file(
@@ -35,6 +43,9 @@ def load_text_file(
         content = file_path.read_text(encoding="utf-8")
     except UnicodeDecodeError:
         content = file_path.read_text(encoding="latin-1")
+
+    if not content.strip():
+        return []
 
     metadata = {
         "source": str(file_path.as_posix()),
@@ -49,7 +60,7 @@ def load_text_file(
 def load_pdf_file(
     file_path: Path, source_type: Optional[SourceType] = None
 ) -> List[Document]:
-    """Load pages from a .pdf file."""
+    """Load pages from a .pdf file. Returns empty list if no extractable text is found."""
     resolved_source_type = source_type or infer_source_type(file_path)
 
     reader = PdfReader(str(file_path))
@@ -66,17 +77,6 @@ def load_pdf_file(
                 "page": page_num,
             }
             documents.append(Document(page_content=text, metadata=metadata))
-
-    # If PDF is completely empty or has no extractable text, still return an empty document or handle gracefully
-    if not documents:
-        metadata = {
-            "source": str(file_path.as_posix()),
-            "source_type": resolved_source_type,
-            "file_name": file_path.name,
-            "file_extension": file_path.suffix.lower(),
-            "page": 1,
-        }
-        documents.append(Document(page_content="", metadata=metadata))
 
     return documents
 

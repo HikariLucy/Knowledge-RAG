@@ -38,8 +38,9 @@ El estado actual del proyecto cubre exclusivamente la **Fundación Técnica** y 
 
 - **Fase 1 — Ingesta Documental y Chunking**:
   - Cargadores para formatos `.txt`, `.md` y `.pdf`.
-  - Clasificación automática y explícita por procedencia (`internal` vs `external`).
+  - Clasificación explícita e inferencia estricta por jerarquía de ruta (`internal` vs `external`).
   - Extracción estricta de metadatos (`source`, `source_type`, `file_name`, `file_extension`, `page`).
+  - Omisión controlada de documentos sin texto extraíble y filtrado de fragmentos vacíos o compuestos únicamente por espacios en blanco.
   - Estrategia de chunking con `RecursiveCharacterTextSplitter`.
   - Preservación íntegra de metadatos y generación de `chunk_index` para trazabilidad.
   - Validación de coherencia de parámetros (`0 <= CHUNK_OVERLAP < CHUNK_SIZE`).
@@ -59,12 +60,12 @@ flowchart TD
     end
 
     subgraph Fase_Posterior["Fases Posteriores (Pendiente)"]
-        F -.-> G["Embeddings\n(text-embedding-004)"]
+        F -.-> G["Embeddings\n(gemini-embedding-2)"]
         G -.-> H["Vector Store\n(FAISS / Chroma)"]
         I["Consulta de Usuario"] -.-> J["Agente / Retriever"]
         H -.-> J
         J -.-> K["Contexto Recuperado + Prompt Aumentado"]
-        K -.-> L["LLM (Google Gemini)"]
+        K -.-> L["LLM (gemini-3.5-flash)"]
         L -.-> M["Respuesta Fundamentada + Fuentes"]
     end
 
@@ -149,8 +150,8 @@ Parámetros configurables en `.env`:
 - `APP_NAME`: Nombre del servicio (predeterminado: `KnowledgeFlow RAG`).
 - `APP_ENV`: Entorno de ejecución (`development`, `production`).
 - `GEMINI_API_KEY`: Clave de API de Google Gemini (opcional en Fase 0/1; no requerida para tests ni arranque inicial).
-- `GEMINI_CHAT_MODEL`: Modelo generativo (predeterminado: `gemini-2.5-flash`).
-- `GEMINI_EMBEDDING_MODEL`: Modelo de embeddings (predeterminado: `text-embedding-004`).
+- `GEMINI_CHAT_MODEL`: Modelo generativo (predeterminado: `gemini-3.5-flash`).
+- `GEMINI_EMBEDDING_MODEL`: Modelo de embeddings (predeterminado: `gemini-embedding-2`).
 - `CHUNK_SIZE`: Tamaño de segmento en caracteres (predeterminado: `500`).
 - `CHUNK_OVERLAP`: Solapamiento de segmento en caracteres (predeterminado: `50`).
 

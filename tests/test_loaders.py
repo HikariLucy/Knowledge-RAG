@@ -18,7 +18,19 @@ def test_infer_source_type():
     """Verify source_type inference from file path hierarchy."""
     assert infer_source_type("knowledge/internal/politica.md") == "internal"
     assert infer_source_type("knowledge/external/guia.txt") == "external"
-    assert infer_source_type("some/other/path.md") == "internal"  # default fallback
+
+    with pytest.raises(ValueError, match="Cannot infer source_type"):
+        infer_source_type("some/other/path.md")
+
+
+def test_load_document_with_explicit_source_type(tmp_path):
+    """Verify explicit source_type overrides path inference."""
+    custom_file = tmp_path / "custom_note.md"
+    custom_file.write_text("Contenido personalizado", encoding="utf-8")
+
+    docs = load_document(custom_file, source_type="external")
+    assert len(docs) == 1
+    assert docs[0].metadata["source_type"] == "external"
 
 
 def test_load_internal_markdown_file():
@@ -49,22 +61,18 @@ def test_load_external_text_file():
     assert doc.metadata["source"] == file_path.as_posix()
 
 
-def test_load_pdf_file(tmp_path):
-    """Verify PDF loading and per-page extraction with metadata."""
-    pdf_path = tmp_path / "manual_seguridad.pdf"
+def test_load_pdf_without_extractable_text_returns_empty_list(tmp_path):
+    """Verify valid PDF without extractable text returns empty list."""
+    pdf_path = tmp_path / "blank.pdf"
 
-    # Create a minimal valid PDF using pypdf
+    # Create a blank PDF with no text
     writer = PdfWriter()
     writer.add_blank_page(width=200, height=200)
     with open(pdf_path, "wb") as f:
         writer.write(f)
 
     docs = load_document(pdf_path, source_type="internal")
-    assert len(docs) == 1
-    assert docs[0].metadata["source_type"] == "internal"
-    assert docs[0].metadata["file_name"] == "manual_seguridad.pdf"
-    assert docs[0].metadata["file_extension"] == ".pdf"
-    assert docs[0].metadata["page"] == 1
+    assert docs == []
 
 
 def test_load_empty_directory(tmp_path):

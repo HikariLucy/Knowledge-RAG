@@ -66,12 +66,13 @@ def split_documents(
 
     # Process documents individually to assign accurate per-document chunk_index
     for doc in documents:
-        raw_chunks = splitter.split_text(doc.page_content)
-        if not raw_chunks and doc.page_content == "":
-            # Handle empty document edge case
-            raw_chunks = [""]
+        if not doc.page_content or not doc.page_content.strip():
+            continue
 
-        for idx, chunk_text in enumerate(raw_chunks):
+        raw_chunks = splitter.split_text(doc.page_content)
+        clean_chunks = [c for c in raw_chunks if c.strip()]
+
+        for idx, chunk_text in enumerate(clean_chunks):
             # Create a copy of original metadata to avoid mutating the original
             metadata = dict(doc.metadata)
             metadata["chunk_index"] = idx

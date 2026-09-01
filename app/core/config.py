@@ -15,8 +15,8 @@ class Settings(BaseSettings):
 
     # LLM Provider (Google Gemini)
     gemini_api_key: Optional[str] = None
-    gemini_chat_model: str = "gemini-2.5-flash"
-    gemini_embedding_model: str = "text-embedding-004"
+    gemini_chat_model: str = "gemini-3.5-flash"
+    gemini_embedding_model: str = "gemini-embedding-2"
 
     # Document Chunking Defaults
     chunk_size: int = 500

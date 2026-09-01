@@ -15,8 +15,8 @@ def test_settings_defaults():
     assert settings.app_name == "KnowledgeFlow RAG"
     assert settings.chunk_size == 500
     assert settings.chunk_overlap == 50
-    assert settings.gemini_chat_model == "gemini-2.5-flash"
-    assert settings.gemini_embedding_model == "text-embedding-004"
+    assert settings.gemini_chat_model == "gemini-3.5-flash"
+    assert settings.gemini_embedding_model == "gemini-embedding-2"
 
 
 def test_gemini_client_unconfigured():

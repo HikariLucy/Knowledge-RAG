@@ -96,6 +96,32 @@ def test_split_rejects_invalid_overlap_in_function():
         split_documents([doc], chunk_size=100, chunk_overlap=100)
 
 
+def test_split_empty_document_content():
+    """Verify Document with empty page_content produces no chunks."""
+    doc = Document(page_content="", metadata={"source": "empty.md"})
+    chunks = split_documents([doc], chunk_size=100, chunk_overlap=10)
+    assert chunks == []
+
+
+def test_split_whitespace_only_document_content():
+    """Verify Document with only whitespace page_content produces no chunks."""
+    doc = Document(page_content="   \n\t  \n  ", metadata={"source": "spaces.md"})
+    chunks = split_documents([doc], chunk_size=100, chunk_overlap=10)
+    assert chunks == []
+
+
+def test_split_mixed_valid_and_empty_documents():
+    """Verify only valid non-empty documents produce chunks in a mixed collection."""
+    doc1 = Document(page_content="   \n  ", metadata={"source": "empty1.md"})
+    doc2 = Document(page_content="Texto válido con información.", metadata={"source": "valid.md", "source_type": "internal"})
+    doc3 = Document(page_content="", metadata={"source": "empty2.md"})
+
+    chunks = split_documents([doc1, doc2, doc3], chunk_size=100, chunk_overlap=10)
+    assert len(chunks) == 1
+    assert chunks[0].metadata["source"] == "valid.md"
+    assert chunks[0].page_content == "Texto válido con información."
+
+
 def test_settings_validation_invalid_chunk_overlap():
     """Verify Settings rejects chunk_overlap >= chunk_size."""
     from app.core.config import Settings
@@ -105,4 +131,3 @@ def test_settings_validation_invalid_chunk_overlap():
 
     with pytest.raises(ValueError, match="strictly less than"):
         Settings(chunk_size=200, chunk_overlap=250)
-
