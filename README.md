@@ -38,7 +38,10 @@ El proyecto cuenta con un paquete integral de documentación técnica, evidencia
 - **[Evidencia de Evaluación y Calibración de Umbrales](docs/evidence/evaluation-evidence.md)**: Resultados del barrido paramétrico ($0.50$ a $0.75$), estado de cuota y procedencia del corpus.
 - **[Guía de Demostración en Vivo (Demo Runbook)](docs/evidence/demo-runbook.md)**: Protocolo paso a paso para la presentación en vivo y respaldo offline.
 - **[Estructura del Informe Académico (Report Outline)](docs/report/report-outline.md)**: Esquema de redacción para el informe de 5 páginas.
+- **[Guía de Redacción Estudiantil (Authorship Worksheet)](docs/report/student-authorship-worksheet.md)**: Preguntas guía, decisiones técnicas (IE8), checklist APA y declaración de IA.
 - **[Estructura de la Presentación Oral (Presentation Outline)](docs/presentation/presentation-outline.md)**: Propuesta de 8 diapositivas (10 minutos de exposición).
+- **[Banco de Preguntas para Defensa Oral](docs/presentation/defense-question-bank.md)**: Preguntas técnicas frecuentes, puntos clave y evidencia de respaldo.
+- **[Checklist del Día de la Demostración](docs/presentation/demo-day-checklist.md)**: Protocolo operacional previo y planes de contingencia para la demo.
 
 ---
 
