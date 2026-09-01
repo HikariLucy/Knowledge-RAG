@@ -27,6 +27,11 @@ class Settings(BaseSettings):
     retrieval_top_k: int = 4
     vectorstore_dir: str = "vectorstore"
 
+    # RAG Generation & Abstention Defaults (Phase 3)
+    # Note: 0.60 is an experimental threshold to be calibrated with in-domain and out-of-domain queries
+    rag_min_similarity: float = 0.60
+    llm_temperature: Optional[float] = 1.0
+
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",
@@ -36,7 +41,7 @@ class Settings(BaseSettings):
 
     @model_validator(mode="after")
     def validate_parameters(self) -> "Settings":
-        """Validate chunk and retrieval configuration parameters."""
+        """Validate chunk, retrieval and generation configuration parameters."""
         if self.chunk_size <= 0:
             raise ValueError(f"chunk_size must be positive, got {self.chunk_size}")
         if self.chunk_overlap < 0:
@@ -54,6 +59,16 @@ class Settings(BaseSettings):
         if self.retrieval_top_k <= 0:
             raise ValueError(
                 f"retrieval_top_k must be positive, got {self.retrieval_top_k}"
+            )
+        if not (0.0 <= self.rag_min_similarity <= 1.0):
+            raise ValueError(
+                f"rag_min_similarity must be between 0.0 and 1.0, got {self.rag_min_similarity}"
+            )
+        if self.llm_temperature is not None and not (
+            0.0 <= self.llm_temperature <= 2.0
+        ):
+            raise ValueError(
+                f"llm_temperature must be between 0.0 and 2.0, got {self.llm_temperature}"
             )
         return self
 

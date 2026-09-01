@@ -17,9 +17,29 @@ def test_settings_defaults():
     assert settings.chunk_overlap == 50
     assert settings.embedding_dimension == 768
     assert settings.retrieval_top_k == 4
+    assert settings.rag_min_similarity == 0.60
+    assert settings.llm_temperature == 1.0
     assert settings.vectorstore_dir == "vectorstore"
     assert settings.gemini_chat_model == "gemini-3.5-flash"
     assert settings.gemini_embedding_model == "gemini-embedding-2"
+
+
+def test_settings_validation_invalid_rag_min_similarity():
+    """Verify out-of-range rag_min_similarity raises ValueError."""
+    with pytest.raises(ValueError, match="rag_min_similarity"):
+        Settings(rag_min_similarity=-0.1)
+
+    with pytest.raises(ValueError, match="rag_min_similarity"):
+        Settings(rag_min_similarity=1.5)
+
+
+def test_settings_validation_invalid_llm_temperature():
+    """Verify out-of-range llm_temperature raises ValueError."""
+    with pytest.raises(ValueError, match="llm_temperature"):
+        Settings(llm_temperature=-0.5)
+
+    with pytest.raises(ValueError, match="llm_temperature"):
+        Settings(llm_temperature=3.0)
 
 
 def test_settings_validation_invalid_embedding_dimension():
