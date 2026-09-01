@@ -67,11 +67,10 @@ El estado actual del proyecto cubre la **Fundación Técnica**, la **Ingesta Doc
   - **Recuperación Balanceada Dual para `all`**: para $k=4$, recupera 2 internas y 2 externas, rellenando cupos si un subconjunto tiene menor evidencia y ordenando finalmente por similitud descendente ($\le K$).
   - **Umbral de Similitud y Abstención Temprana (`RAG_MIN_SIMILARITY=0.60`)**: si la evidencia recuperada no alcanza el umbral mínimo, el pipeline se abstiene tempranamente sin invocar al LLM generador (`abstained=True`).
   - **Prompt Engineering Estructurado (`RAG_SYSTEM_PROMPT`)**: directivas de rol, contexto, anclaje estricto en hechos, citas obligatorias y protección activa contra Prompt Injection (tratando `<context>` y `<question>` como datos no confiables pasivos).
-  - **Constructor de Contexto y Referencias (`build_rag_context`)**: asigna identificadores de turno `[S1]..[SN]` y construye `List[SourceReference]` sin mutar metadata.
-  - **Validación Estricta de Citas y Reparación**: verifica que toda afirmación contenga citas válidas existentes en el contexto, detecta citas fantasma (e.g. `[S7]`) y ejecuta como máximo un reintento de reparación antes de emitir un fallback controlado.
+  - **Validación de Citas y Reparación**: cuando existen fuentes recuperadas en el contexto, la respuesta generada debe contener al menos una cita válida `[S#]` y ninguna cita fantasma (e.g. `[S7]` si solo existen `S1..S4`). Ante incumplimiento (0 citas o citas fantasma), el sistema ejecuta como máximo un intento de reparación; si vuelve a fallar, la respuesta se marca como no fundamentada (`is_grounded=False`) y se retorna un fallback controlado. El system prompt instruye al modelo a citar las afirmaciones basadas en la evidencia provista.
   - **Endpoint REST (`POST /api/query`)**: expone el pipeline RAG vía FastAPI con ciclo de vida optimizado (vector store cargado en memoria) y respuesta HTTP 503 controlada si el índice no existe o está desactualizado.
   - **CLI de Consulta Completa (`python -m app.rag.ask`)**: interfaz interactiva para consultar el pipeline RAG y visualizar respuestas, citas y fuentes.
-  - **Suite de Pruebas**: 104 pruebas unitarias 100% offline con proveedores fake deterministas (`FakeSourceRouter`, `FakeRAGGenerator`, `DeterministicFakeEmbeddings`).
+  - **Suite de Pruebas**: 108 pruebas automatizadas 100% offline con proveedores fake deterministas (`FakeSourceRouter`, `FakeRAGGenerator`, `DeterministicFakeEmbeddings`).
   - **Scripts de Verificación Live**: `scripts/test_gemini_chat.py` y `scripts/test_rag_live.py`.
 
 ---
@@ -325,7 +324,7 @@ python scripts/test_rag_live.py
 
 ## Ejecutar pruebas automatizadas
 
-Ejecutar la suite completa de 104 pruebas unitarias 100% offline (sin llamadas de red):
+Ejecutar la suite completa de 108 pruebas automatizadas 100% offline (sin llamadas de red):
 
 ```powershell
 python -m pytest -v
