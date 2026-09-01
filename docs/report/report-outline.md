@@ -1,110 +1,126 @@
 # Estructura de Informe Académico (Report Outline) — KnowledgeFlow RAG
 
-Este esquema define la estructura, evidencias técnicas, figuras sugeridas y archivos de respaldo para la redacción del informe técnico-académico del proyecto (límite recomendado: 5 páginas).
+Este esquema define la estructura, evidencias técnicas, figuras sugeridas y archivos de respaldo para la redacción del informe técnico-académico del proyecto (límite recomendado: 5 páginas), alineado con los indicadores oficiales de evaluación (IE1–IE9).
 
 ---
 
-## Sección 1: Caso Organizacional y Definición de la Necesidad
+## Sección 1: Caso Organizacional y Requerimientos del Agente (IE1 — 15%)
 
 ### 1.1. Objetivo de la Sección
-Contextualizar la problemática de dispersión documental y falta de trazabilidad en las organizaciones, presentando el caso de estudio de **NovaTech SpA**.
+Contextualizar la problemática de dispersión documental y falta de trazabilidad en las organizaciones, presentando el caso de estudio simulado de **NovaTech SpA** (caso pedagógico).
 
 ### 1.2. Evidencias Técnicas Disponibles
-- Corpus de políticas internas de acceso, procedimientos de respuesta a incidentes y preguntas frecuentes institucionales.
-- Necesidad de consultar estándares normativos externos (OWASP, NIST) sin mezclar arbitrariamente las directivas internas con las directrices públicas.
+- Corpus simulado de políticas internas de acceso, procedimientos de respuesta a incidentes y preguntas frecuentes institucionales.
+- Delimitación de necesidades: consulta diferenciada de políticas internas (`INT`) y estándares normativos externos (`EXT`) mediante un agente enrutador (`SourceRouter`).
 
 ### 1.3. Archivos del Repositorio Asociados
-- [`knowledge/internal/politica_accesos.md`](file:///c:/Users/jiqmo/OneDrive/Documentos/DocumentosDuocUC/ISY0101-IA/KnowledgeFlow%20RAG/knowledge/internal/politica_accesos.md)
-- [`knowledge/internal/procedimiento_incidentes.md`](file:///c:/Users/jiqmo/OneDrive/Documentos/DocumentosDuocUC/ISY0101-IA/KnowledgeFlow%20RAG/knowledge/internal/procedimiento_incidentes.md)
-- [`knowledge/internal/faq_interna.txt`](file:///c:/Users/jiqmo/OneDrive/Documentos/DocumentosDuocUC/ISY0101-IA/KnowledgeFlow%20RAG/knowledge/internal/faq_interna.txt)
+- [`../../knowledge/internal/politica_accesos.md`](../../knowledge/internal/politica_accesos.md)
+- [`../../knowledge/internal/procedimiento_incidentes.md`](../../knowledge/internal/procedimiento_incidentes.md)
+- [`../../knowledge/internal/faq_interna.txt`](../../knowledge/internal/faq_interna.txt)
 
 ### 1.4. Redacción Pendiente
 > [REQUIERE REDACCIÓN DEL EQUIPO: Contexto específico de la organización, delimitación del alcance operativo y justificación de la necesidad de negocio.]
 
 ---
 
-## Sección 2: Diseño de la Solución y Enfoque Metodológico
+## Sección 2: Prompt Engineering y Control de Contexto (IE2 — 10%)
 
 ### 2.1. Objetivo de la Sección
-Describir la estrategia de solución basada en un sistema RAG de precisión con enrutamiento inteligente de fuentes y compuertas de seguridad.
+Detallar el diseño de prompts adaptados a los requerimientos del caso, las restricciones de grounding y la mitigación de inyección de contexto.
 
 ### 2.2. Evidencias Técnicas Disponibles
-- Separación funcional entre conocimiento institucional (`internal`) y marcos de referencia públicos (`external`).
-- Esquema de recuperación dual balanceada para consultas comparativas (`all`).
-- Enfoque *Evidence-First* en la presentación de resultados.
+- **Aislamiento de Planos**: Delimitadores estructurales XML en prompts de usuario y sistema (`<context><source id="S#">...</source></context>`) para separar directivas de control de datos no confiables.
+- **Formato Estricto de Citas**: Obligatoriedad de citas `[S#]` vinculadas exclusivamente al contexto provisto.
+- **Prompt del Enrutador**: Clasificación estructurada en JSON (`RouteDecision`) con umbral de confianza.
 
-### 2.3. Tablas y Figuras Sugeridas
-- Tabla comparativa entre RAG genérico (caja negra) vs. KnowledgeFlow RAG (trazable y fundamentado).
+### 2.3. Archivos del Repositorio Asociados
+- [`../../app/rag/prompts.py`](../../app/rag/prompts.py)
+- [`../../app/agents/source_router.py`](../../app/agents/source_router.py)
 
-### 2.4. Archivos del Repositorio Asociados
-- [`app/rag/pipeline.py`](file:///c:/Users/jiqmo/OneDrive/Documentos/DocumentosDuocUC/ISY0101-IA/KnowledgeFlow%20RAG/app/rag/pipeline.py)
-- [`app/rag/schemas.py`](file:///c:/Users/jiqmo/OneDrive/Documentos/DocumentosDuocUC/ISY0101-IA/KnowledgeFlow%20RAG/app/rag/schemas.py)
-
-### 2.5. Redacción Pendiente
-> [REQUIERE REDACCIÓN DEL EQUIPO: Argumentación sobre la elección de la arquitectura desacoplada frente a otras alternativas evaluadas.]
+### 2.4. Redacción Pendiente
+> [REQUIERE REDACCIÓN DEL EQUIPO: Análisis de los patrones de prompting seleccionados y justificación del diseño de instrucciones.]
 
 ---
 
-## Sección 3: Prompt Engineering, Agente de Enrutamiento y RAG
+## Sección 3: Flujos RAG Internos y Externos (IE3 — 10%)
 
 ### 3.1. Objetivo de la Sección
-Detallar el diseño de prompts seguros, la lógica del agente clasificador de ámbito y los mecanismos de generación fundamentada con citas.
+Describir la configuración de los flujos de recuperación documental para fuentes internas y externas, y la estrategia de balanceo multi-fuente.
 
 ### 3.2. Evidencias Técnicas Disponibles
-- **Agente Enrutador**: `GeminiSourceRouter` operando con `gemini-3.5-flash-lite`, salida tipada JSON `RouteDecision` y manejo de baja confianza.
-- **Aislamiento de Planos**: Delimitadores estructurales XML en prompts de usuario y sistema para impedir secuestro por Prompt Injection indirecto.
-- **Validación de Citas**: Expresión regular `\[S\d+\]`, mapeo con identificadores en contexto y módulo de autorreparación de citas en el generador (`gemini-3.5-flash`).
+- Ingesta estructurada con preservación de metadatos (`source_type`, `file_name`, `chunk_index`).
+- Enrutamiento por ámbito (`internal`, `external`, `all`).
+- Recuperación balanceada dual para consultas comparativas ($k/2$ fragmentos internos y $k/2$ externos).
 
 ### 3.3. Archivos del Repositorio Asociados
-- [`app/agents/source_router.py`](file:///c:/Users/jiqmo/OneDrive/Documentos/DocumentosDuocUC/ISY0101-IA/KnowledgeFlow%20RAG/app/agents/source_router.py)
-- [`app/rag/prompts.py`](file:///c:/Users/jiqmo/OneDrive/Documentos/DocumentosDuocUC/ISY0101-IA/KnowledgeFlow%20RAG/app/rag/prompts.py)
-- [`app/rag/generator.py`](file:///c:/Users/jiqmo/OneDrive/Documentos/DocumentosDuocUC/ISY0101-IA/KnowledgeFlow%20RAG/app/rag/generator.py)
+- [`../../app/rag/loaders.py`](../../app/rag/loaders.py)
+- [`../../app/rag/retriever.py`](../../app/rag/retriever.py)
+- [`../../app/rag/pipeline.py`](../../app/rag/pipeline.py)
 
 ### 3.4. Redacción Pendiente
-> [REQUIERE REDACCIÓN DEL EQUIPO: Análisis de los patrones de prompting seleccionados y justificación del desacoplamiento de modelos.]
+> [REQUIERE REDACCIÓN DEL EQUIPO: Argumentación sobre el balanceo de fuentes y la prevención de sesgo hacia un único dominio.]
 
 ---
 
-## Sección 4: Arquitectura del Sistema, Vectorstore y Trazabilidad
+## Sección 4: Arquitectura de la Solución y Trazabilidad (IE4 — 15%, IE7 — 10%)
 
 ### 4.1. Objetivo de la Sección
-Exponer el flujo end-to-end desde la interfaz web hasta la capa de persistencia vectorial y API.
+Exponer el flujo end-to-end desde la interfaz web hasta la capa de persistencia vectorial, API FastAPI y validación de referencias.
 
 ### 4.2. Evidencias Técnicas Disponibles
-- Diagrama de arquitectura Mermaid con 7 subsistemas articulados.
+- Diagrama de arquitectura Mermaid con capas desacopladas (UI, API, Enrutamiento, Recuperación, Compuerta de Abstención, Generación, Validación de Citas).
 - Persistencia FAISS con embeddings normalizados `gemini-embedding-2` (768d).
-- Mecanismo de validación criptográfica `verify_index_freshness` (SHA-256) contra desalineación del corpus.
-- Contrato estricto `QueryResponse` en FastAPI y consola web sin uso de `innerHTML`.
+- Verificación de coherencia del índice mediante fingerprint determinista SHA-256 (`verify_index_freshness`).
+- Interfaz web editorial con Evidence Ledger y trazabilidad documental interactiva.
 
 ### 4.3. Tablas y Figuras Sugeridas
-- Diagrama Mermaid de Arquitectura ([`docs/architecture/architecture.mmd`](file:///c:/Users/jiqmo/OneDrive/Documentos/DocumentosDuocUC/ISY0101-IA/KnowledgeFlow%20RAG/docs/architecture/architecture.mmd)).
+- Diagrama Mermaid de Arquitectura ([`../architecture/architecture.mmd`](../architecture/architecture.mmd), [`../architecture/architecture.md`](../architecture/architecture.md)).
 
 ### 4.4. Archivos del Repositorio Asociados
-- [`docs/architecture/architecture.md`](file:///c:/Users/jiqmo/OneDrive/Documentos/DocumentosDuocUC/ISY0101-IA/KnowledgeFlow%20RAG/docs/architecture/architecture.md)
-- [`app/rag/vectorstore.py`](file:///c:/Users/jiqmo/OneDrive/Documentos/DocumentosDuocUC/ISY0101-IA/KnowledgeFlow%20RAG/app/rag/vectorstore.py)
-- [`app/api/routes.py`](file:///c:/Users/jiqmo/OneDrive/Documentos/DocumentosDuocUC/ISY0101-IA/KnowledgeFlow%20RAG/app/api/routes.py)
+- [`../architecture/architecture.md`](../architecture/architecture.md)
+- [`../../app/rag/vectorstore.py`](../../app/rag/vectorstore.py)
+- [`../../app/api/routes.py`](../../app/api/routes.py)
 
 ### 4.5. Redacción Pendiente
-> [REQUIERE REDACCIÓN DEL EQUIPO: Justificación técnica de las decisiones de diseño sobre el vectorstore y la seguridad de la interfaz.]
+> [REQUIERE REDACCIÓN DEL EQUIPO: Justificación técnica de las decisiones de arquitectura, desacoplamiento de modelos y diseño de componentes.]
 
 ---
 
-## Sección 5: Evaluación Experimental, Calibración y Limitaciones
+## Sección 5: Coherencia, Evaluación Experimental y Fundamentación de Decisiones (IE5 — 10%, IE6 — 10%, IE8 — 10%)
 
 ### 5.1. Objetivo de la Sección
-Presentar los resultados empíricos del barrido de umbrales, la calibración de la compuerta de abstención temprana, las limitaciones de cuota encontradas y las líneas de trabajo futuro.
+Presentar los resultados empíricos del barrido de umbrales, la calibración de la compuerta de abstención temprana, el estado de las evaluaciones live y la justificación técnica de las decisiones adoptadas.
 
 ### 5.2. Evidencias Técnicas Disponibles
-- **Barrido Paramétrico**: Resultados con $Top\text{-}K=4$ sobre 20 casos revisados humanamente ($\tau=0.60$ como óptimo experimental con 100% de retención y 0% de fuga OOD).
-- **Limitación de Cuota Identificada**: Límite de 20 RPD en Free Tier de Google Gemini (`GenerateRequestsPerDayPerProjectPerModel-FreeTier`) y estrategia de desacoplamiento aplicada.
-- **Suite de Pruebas**: 156 tests automatizados 100% offline.
+- **Barrido Paramétrico (Threshold Sweep)**: Resultados con $Top\text{-}K=4$ sobre 20 casos revisados humanamente (0.60 seleccionado como el menor umbral evaluado que retiene 100% de casos válidos con 0% de fuga OOD).
+- **Validación de Citas y Coherencia**: Sistema de citas obligatorias `[S#]` y reparación controlada ante citas fantasma.
+- **Estado de Evaluación Live**: Reporte de estado `PENDING` por cuota diaria en Free Tier (20 RPD en `gemini-3.5-flash`), documentando la restricción sin inventar métricas sintéticas.
+- **Suite de Pruebas**: 156 tests automatizados ejecutados 100% offline.
 
 ### 5.3. Tablas y Figuras Sugeridas
-- Tabla de resultados del Threshold Sweep ([`docs/evidence/evaluation-evidence.md`](file:///c:/Users/jiqmo/OneDrive/Documentos/DocumentosDuocUC/ISY0101-IA/KnowledgeFlow%20RAG/docs/evidence/evaluation-evidence.md#12-tabla-de-resultados-empíricos-del-barrido)).
+- Tabla de resultados del Threshold Sweep ([`../evidence/evaluation-evidence.md`](../evidence/evaluation-evidence.md#12-tabla-de-resultados-empíricos-del-barrido)).
+- Matriz de Trazabilidad con Rúbrica ([`../evidence/implementation-evidence.md`](../evidence/implementation-evidence.md#2-trazabilidad-con-pauta-oficial-de-evaluación-indicadores-ie1---ie9)).
 
 ### 5.4. Archivos del Repositorio Asociados
-- [`app/evaluation/threshold_sweep.py`](file:///c:/Users/jiqmo/OneDrive/Documentos/DocumentosDuocUC/ISY0101-IA/KnowledgeFlow%20RAG/app/evaluation/threshold_sweep.py)
-- [`evaluation/dataset_verified.json`](file:///c:/Users/jiqmo/OneDrive/Documentos/DocumentosDuocUC/ISY0101-IA/KnowledgeFlow%20RAG/evaluation/dataset_verified.json)
+- [`../../app/evaluation/threshold_sweep.py`](../../app/evaluation/threshold_sweep.py)
+- [`../../evaluation/dataset_verified.json`](../../evaluation/dataset_verified.json)
+- [`../evidence/evaluation-evidence.md`](../evidence/evaluation-evidence.md)
 
 ### 5.5. Redacción Pendiente
-> [REQUIERE REDACCIÓN DEL EQUIPO: Conclusiones académicas finales, análisis crítico del impacto de las limitaciones de cuota, reflexiones individuales y propuestas de escalabilidad.]
+> [REQUIERE REDACCIÓN DEL EQUIPO: Fundamentación final de decisiones de diseño, análisis crítico de resultados, conclusiones académicas y reflexiones individuales.]
+
+---
+
+## Sección 6: Planificación de Integridad Académica y Formato APA
+
+### 6.1. Declaración de Uso de Herramientas de IA
+> [REQUIERE REDACCIÓN DEL EQUIPO: Declaración explícita del uso de asistentes y herramientas de inteligencia artificial en el desarrollo del proyecto, de acuerdo con la normativa institucional.]
+
+### 6.2. Checklist de Citación y Formato APA
+- [ ] Referencias completas en formato APA para fuentes autoritativas externas:
+  - OWASP Foundation. (2026). *OWASP LLM Prompt Injection Prevention Cheat Sheet*.
+  - National Institute of Standards and Technology. (2022). *Secure Software Development Framework (SSDF) Version 1.1: Recommendations for Mitigating the Risk of Software Vulnerabilities* (NIST SP 800-218).
+  - National Institute of Standards and Technology. (2020). *NIST Privacy Framework: A Tool for Improving Privacy through Enterprise Risk Management, Version 1.0*.
+- [ ] Citas parentéticas en texto en las secciones teóricas y metodológicas.
+- [ ] Consistencia en la numeración y títulos de tablas y figuras.
+- [ ] Declaración firmada/declarada de autoría y uso de IA.

@@ -14,8 +14,8 @@ flowchart TD
 
     subgraph Retrieval["Capa de Recuperación y Vectorstore"]
         Embedder["Gemini Embeddings<br/>(gemini-embedding-2 / 768d)"]
-        FAISS["Índice FAISS + Manifest<br/>(IndexFreshness SHA-256)"]
-        CorpusInt["Corpus Interno (INT)<br/>NovaTech SpA"]
+        FAISS["Índice FAISS + Manifest<br/>(Fingerprint determinista SHA-256)"]
+        CorpusInt["Corpus Interno (INT)<br/>NovaTech SpA (Simulado)"]
         CorpusExt["Corpus Externo (EXT)<br/>OWASP & NIST Curados"]
     end
 
@@ -28,7 +28,7 @@ flowchart TD
     subgraph Generation["Capa de Síntesis Fundamentada"]
         ContextBuilder["Aislamiento de Contexto<br/>(Planos de Control y Datos)"]
         Generator["Grounded RAG Generator<br/>(gemini-3.5-flash)"]
-        CitationCheck["Validador de Citas [S#]<br/>(Rechazo de Alucinaciones)"]
+        CitationCheck["Validador de Citas [S#]<br/>(Validación de Referencias [S#])"]
     end
 
     subgraph Output["Entrega y Trazabilidad"]

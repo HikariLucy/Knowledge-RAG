@@ -1,6 +1,6 @@
 # Guía de Ejecución y Demostración en Vivo (Demo Runbook) — KnowledgeFlow RAG
 
-Este documento describe la secuencia técnica y los comandos operacionales para realizar una demostración en vivo reproducible y sin improvisaciones.
+Este documento describe la secuencia técnica y los comandos operacionales para realizar una demostración en vivo reproducible y estructurada.
 
 ---
 
@@ -21,7 +21,7 @@ http://127.0.0.1:8010/
 ---
 
 ### Modo B: Demostración Offline de Respaldo (Backup UI Preview)
-> **Propósito**: Respaldo ante fallos de conectividad, caída de API o agotamiento de cuota diaria (HTTP 429) durante la presentación.
+> **Propósito**: Respaldo ante fallos de conectividad, indisponibilidad de API o agotamiento de cuota diaria (HTTP 429) durante la presentación.
 > **Advertencia**: *Este modo es una previsualización determinista de interfaz. NO ejecuta el pipeline RAG live y NO constituye evidencia de rendimiento.*
 
 Ejecutar en la terminal:
@@ -90,9 +90,9 @@ http://127.0.0.1:8010/
 2. Presionar **Consultar**.
 3. Mostrar:
    - Activación de la tarjeta especial: **"EVIDENCIA INSUFICIENTE (Abstención Controlada)"**.
-   - Explicar la compuerta de seguridad: al no superarse el umbral de similitud ($\ge 0.60$), el sistema corta el flujo antes de generar texto para impedir alucinaciones.
+   - Explicar la compuerta de seguridad: al no superarse el umbral de similitud ($\ge 0.60$), el sistema corta el flujo antes de generar texto para reducir respuestas sin respaldo documental.
    - Cero citas registradas (`citations: []`) y cero fuentes en el ledger (`sources: []`).
 
 ### Paso 6: Inspección de Trazabilidad Técnica
 1. Desplegar la sección inferior **"Ver trazabilidad técnica del contrato QueryResponse"**.
-2. Mostrar la tabla de parámetros y el bloque JSON crudo retornado por la API (`source_scope`, `abstained`, `citations`, `sources`).
+2. Mostrar la tabla de parámetros y el bloque JSON retornado por la API (`source_scope`, `abstained`, `citations`, `sources`).
