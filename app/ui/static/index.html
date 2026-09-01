@@ -11,16 +11,15 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
-  <!-- Header: Compact Editorial & Technical Strip -->
+  <!-- KnowledgeFlow identity masthead -->
   <header class="app-header">
     <div class="header-inner container">
       <div class="brand-group">
         <div class="brand-glyph" aria-hidden="true">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square">
-            <rect x="3" y="3" width="18" height="18" rx="1"></rect>
-            <line x1="3" y1="9" x2="21" y2="9"></line>
-            <line x1="9" y1="21" x2="9" y2="9"></line>
-            <circle cx="6" cy="6" r="1" fill="currentColor"></circle>
+          <svg width="28" height="28" viewBox="0 0 28 28" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M3 3h8v8H3zM17 3h8v8h-8zM3 17h8v8H3z"></path>
+            <path d="M11 7h6M7 11v6M11 21h4a6 6 0 0 0 6-6v-4"></path>
+            <path d="M17 17h8v8h-8z" fill="currentColor" stroke="none"></path>
           </svg>
         </div>
         <div class="brand-titles">
@@ -31,8 +30,8 @@
 
       <div class="header-connector" aria-hidden="true"></div>
 
-      <div class="header-tags">
-        <span class="tag-pill tag-pill-primary">RAG SYSTEM</span>
+      <div class="header-tags" aria-label="Identidad del sistema">
+        <span class="tag-pill tag-pill-primary"><span class="system-signal" aria-hidden="true"></span>RAG SYSTEM</span>
         <span class="tag-divider">/</span>
         <span class="tag-pill">EVIDENCE-FIRST RETRIEVAL</span>
       </div>
@@ -47,13 +46,13 @@
           <span class="station-tag">QUERY / 01</span>
           <h1 id="query-heading" class="station-title">Consulta de conocimiento</h1>
         </div>
-        <span class="station-meta-hint">Recuperación semántica balanceada sobre corpus institucional y normativo</span>
+          <span class="station-meta-hint">Corpus institucional + referencia normativa</span>
       </div>
 
       <form id="query-form" class="station-form" novalidate>
         <div class="station-input-block">
           <label for="query-input" class="sr-only">Escribe tu consulta</label>
-          <div class="textarea-container">
+          <div class="textarea-container" data-label="DOCUMENT QUERY">
             <textarea
               id="query-input"
               name="query"
@@ -64,7 +63,8 @@
               aria-describedby="scope-selector-desc"
             ></textarea>
             <div class="textarea-footer">
-              <span class="keyboard-hint">Presiona <kbd>Ctrl</kbd>+<kbd>Enter</kbd> para consultar</span>
+              <span class="textarea-mode">Síntesis con evidencia verificable</span>
+              <span class="keyboard-hint"><kbd>Ctrl</kbd> + <kbd>Enter</kbd> para consultar</span>
             </div>
           </div>
         </div>
@@ -78,19 +78,19 @@
             <div class="provenance-segmented" id="scope-selector">
               <label class="provenance-option" title="Enrutamiento automático según la intención de la consulta">
                 <input type="radio" name="source_scope" value="" checked data-legend="AUTO: Enrutamiento inteligente por Source Router">
-                <span class="prov-seg-label">AUTO</span>
+                <span class="prov-seg-label"><span class="prov-marker" aria-hidden="true">A</span>AUTO</span>
               </label>
               <label class="provenance-option" title="Limitar búsqueda a políticas y procedimientos internos NovaTech">
                 <input type="radio" name="source_scope" value="internal" data-legend="INT: Fuentes institucionales internas (NovaTech)">
-                <span class="prov-seg-label prov-seg-int">INT</span>
+                <span class="prov-seg-label prov-seg-int"><span class="prov-marker" aria-hidden="true">I</span>INT</span>
               </label>
               <label class="provenance-option" title="Limitar búsqueda a estándares y guías técnicas externas (OWASP, NIST)">
                 <input type="radio" name="source_scope" value="external" data-legend="EXT: Referencias y normativas técnicas públicas">
-                <span class="prov-seg-label prov-seg-ext">EXT</span>
+                <span class="prov-seg-label prov-seg-ext"><span class="prov-marker" aria-hidden="true">E</span>EXT</span>
               </label>
               <label class="provenance-option" title="Recuperación balanceada dual (fuentes internas + externas)">
                 <input type="radio" name="source_scope" value="all" data-legend="INT + EXT: Consulta comparativa integral">
-                <span class="prov-seg-label">INT + EXT</span>
+                <span class="prov-seg-label"><span class="prov-marker prov-marker-split" aria-hidden="true">I/E</span>INT + EXT</span>
               </label>
             </div>
             <span id="scope-selector-desc" class="sr-only">Selecciona el alcance documental para la recuperación.</span>
@@ -98,7 +98,8 @@
 
           <div class="submit-container">
             <button type="submit" id="submit-btn" class="workbench-btn-primary">
-              <span class="btn-text">Consultar</span>
+              <span class="btn-index" aria-hidden="true">01</span>
+              <span class="btn-text">Consultar corpus</span>
               <svg class="btn-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" aria-hidden="true">
                 <line x1="5" y1="12" x2="19" y2="12"></line>
                 <polyline points="12 5 19 12 12 19"></polyline>
@@ -114,17 +115,17 @@
             <span class="ref-desc">Haz clic para cargar en el área de trabajo</span>
           </div>
           <div class="ref-list" role="list">
-            <button type="button" class="ref-item-btn" data-query="¿Qué requisitos deben cumplir las contraseñas internas?">
+            <button type="button" class="ref-item-btn" data-scope="internal" data-query="¿Qué requisitos deben cumplir las contraseñas internas?">
               <span class="ref-num">01</span>
               <span class="ref-text">Requisitos de contraseñas internas</span>
               <span class="ref-tag tag-int">INT</span>
             </button>
-            <button type="button" class="ref-item-btn" data-query="¿Cómo se previene Prompt Injection según OWASP?">
+            <button type="button" class="ref-item-btn" data-scope="external" data-query="¿Cómo se previene Prompt Injection según OWASP?">
               <span class="ref-num">02</span>
               <span class="ref-text">Prevención de Prompt Injection · OWASP</span>
               <span class="ref-tag tag-ext">EXT</span>
             </button>
-            <button type="button" class="ref-item-btn" data-query="Compara el procedimiento interno de incidentes con buenas prácticas externas.">
+            <button type="button" class="ref-item-btn" data-scope="all" data-query="Compara el procedimiento interno de incidentes con buenas prácticas externas.">
               <span class="ref-num">03</span>
               <span class="ref-text">Incidentes internos vs buenas prácticas externas</span>
               <span class="ref-tag tag-all">INT + EXT</span>
@@ -137,28 +138,30 @@
     <!-- Initial State: Knowledge Engine Architecture Guide -->
     <section id="pipeline-guide" class="pipeline-guide-section" aria-label="Arquitectura del Motor de Conocimiento">
       <div class="pipeline-header">
-        <span class="pipeline-title">MOTOR DE CONOCIMIENTO &bull; PIPELINE RAG DE PRECISIÓN</span>
+        <span class="pipeline-kicker">SYSTEM MAP / 04</span>
+        <span class="pipeline-title">MOTOR DE CONOCIMIENTO</span>
+        <span class="pipeline-summary">Pregunta → enrutamiento → recuperación → verificación → respuesta</span>
       </div>
       <div class="pipeline-steps-grid">
         <div class="pipe-step-card">
-          <div class="pipe-step-idx">01 &bull; ROUTE</div>
+          <div class="pipe-step-idx"><span>01</span> ROUTE</div>
           <div class="pipe-step-name">Source Router</div>
-          <p class="pipe-step-desc">Clasifica el alcance de búsqueda en <code>internal</code>, <code>external</code> o <code>all</code> con fallback seguro.</p>
+          <p class="pipe-step-desc">Determina <code>internal</code>, <code>external</code> o <code>all</code>.</p>
         </div>
         <div class="pipe-step-card">
-          <div class="pipe-step-idx">02 &bull; RETRIEVE</div>
+          <div class="pipe-step-idx"><span>02</span> RETRIEVE</div>
           <div class="pipe-step-name">Semantic Retrieval</div>
-          <p class="pipe-step-desc">Búsqueda vectorial en FAISS con similitud coseno y balanceo dual de evidencia.</p>
+          <p class="pipe-step-desc">Recuperación semántica FAISS por similitud coseno.</p>
         </div>
         <div class="pipe-step-card">
-          <div class="pipe-step-idx">03 &bull; VERIFY</div>
+          <div class="pipe-step-idx"><span>03</span> VERIFY</div>
           <div class="pipe-step-name">Evidence Filter</div>
-          <p class="pipe-step-desc">Compuerta de similitud (umbral ≥ 0.60) y abstención temprana ante consultas sin respaldo.</p>
+          <p class="pipe-step-desc">Aplica el umbral de evidencia y decide si responder.</p>
         </div>
         <div class="pipe-step-card">
-          <div class="pipe-step-idx">04 &bull; ANSWER</div>
+          <div class="pipe-step-idx"><span>04</span> ANSWER</div>
           <div class="pipe-step-name">Grounded Synthesis</div>
-          <p class="pipe-step-desc">Generación trazable con citas obligatorias [S#] y validación estricta de procedencia.</p>
+          <p class="pipe-step-desc">Entrega síntesis fundamentada con citas verificables [S#].</p>
         </div>
       </div>
     </section>
@@ -172,15 +175,16 @@
           </div>
         </div>
         <div class="loading-content">
-          <p class="loading-title">Procesando consulta en el motor RAG...</p>
+          <p class="loading-eyebrow">KNOWLEDGE ENGINE / EN CURSO</p>
+          <p class="loading-title">Procesando consulta</p>
           <div class="process-steps" aria-hidden="true">
-            <span class="p-step active">01 Enrutando</span>
+            <span class="p-step">01 ROUTE</span>
             <span class="p-arrow">→</span>
-            <span class="p-step">02 Recuperando</span>
+            <span class="p-step">02 RETRIEVE</span>
             <span class="p-arrow">→</span>
-            <span class="p-step">03 Verificando</span>
+            <span class="p-step">03 VERIFY</span>
             <span class="p-arrow">→</span>
-            <span class="p-step">04 Fundamentando</span>
+            <span class="p-step">04 ANSWER</span>
           </div>
         </div>
       </div>
@@ -213,7 +217,7 @@
           <div class="station-header result-header">
             <div class="header-title-group">
               <span class="station-tag">RESULT / 02</span>
-              <h2 class="station-title" id="answer-heading">Respuesta Fundamentada</h2>
+              <h2 class="station-title" id="answer-heading">Respuesta fundamentada</h2>
               <span id="grounding-status-pill" class="status-pill status-grounded">FUNDAMENTADA</span>
             </div>
             <div class="header-meta">
@@ -236,12 +240,13 @@
                 </svg>
               </div>
               <div class="abstention-details">
-                <h3 class="abstention-title">Evidencia Insuficiente (Abstención Controlada)</h3>
+                <span class="abstention-kicker">DECISIÓN DE EVIDENCIA</span>
+                <h3 class="abstention-title">EVIDENCIA INSUFICIENTE</h3>
                 <p class="abstention-text">
-                  KnowledgeFlow no encontró evidencia documental con similitud suficiente (umbral ≥ 0.60) para fundamentar una respuesta verificable a esta consulta.
+                  KnowledgeFlow no encontró evidencia documental suficiente para fundamentar una respuesta verificable a esta consulta.
                 </p>
                 <p class="abstention-policy">
-                  El sistema se abstiene intencionalmente para garantizar la fidelidad del conocimiento institucional y evitar alucinaciones.
+                  El sistema decidió no completar vacíos con información no respaldada. La trazabilidad disponible se conserva debajo.
                 </p>
               </div>
             </div>
@@ -249,23 +254,27 @@
 
           <!-- Traceability Strip -->
           <div class="traceability-strip" aria-label="Resumen de trazabilidad">
+            <div class="trace-stamp" aria-hidden="true">
+              <span>TRACE</span>
+              <strong id="trace-stamp-state">VERIFIED</strong>
+            </div>
             <div class="trace-item">
-              <span class="trace-label">Alcance usado</span>
+              <span class="trace-label">Alcance</span>
               <span id="trace-scope" class="trace-value">ALL</span>
             </div>
             <div class="trace-divider"></div>
             <div class="trace-item">
-              <span class="trace-label">Fuentes recuperadas</span>
+              <span class="trace-label">Fuentes</span>
               <span id="trace-sources-count" class="trace-value">0</span>
             </div>
             <div class="trace-divider"></div>
             <div class="trace-item">
-              <span class="trace-label">Citas verificadas</span>
+              <span class="trace-label">Citas</span>
               <span id="trace-citations-count" class="trace-value">0</span>
             </div>
             <div class="trace-divider"></div>
             <div class="trace-item">
-              <span class="trace-label">Estado de fundamentación</span>
+              <span class="trace-label">Estado</span>
               <span id="trace-grounded-state" class="trace-value state-grounded">FUNDAMENTADA</span>
             </div>
           </div>
@@ -273,7 +282,7 @@
           <!-- Technical Traceability Collapsible -->
           <details class="technical-details">
             <summary class="technical-summary">
-              <span>Ver trazabilidad técnica del contrato QueryResponse</span>
+              <span class="technical-summary-copy"><span class="technical-prefix">INSPECT /</span> Ver trazabilidad técnica</span>
               <svg class="details-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <polyline points="6 9 12 15 18 9"></polyline>
               </svg>
@@ -307,10 +316,10 @@
           <div class="station-header evidence-header">
             <div class="header-title-group">
               <span class="station-tag">LEDGER / 03</span>
-              <h2 id="evidence-heading" class="station-title">Evidencia Recuperada</h2>
+              <h2 id="evidence-heading" class="station-title">Evidencia recuperada</h2>
               <span id="evidence-count-badge" class="count-badge">0</span>
             </div>
-            <span class="evidence-hint">Ordenada por similitud</span>
+            <span class="evidence-hint">SIMILITUD ↓</span>
           </div>
 
           <div class="evidence-body">

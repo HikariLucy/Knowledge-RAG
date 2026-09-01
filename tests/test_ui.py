@@ -31,12 +31,15 @@ def test_ui_static_styles_accessible():
 
 
 def test_ui_static_app_js_accessible():
-    """Verify GET /static/app.js returns 200 with JavaScript content."""
+    """Verify the UI JavaScript is served and preserves safe citation rendering."""
     response = client.get("/static/app.js")
     assert response.status_code == 200
     assert "javascript" in response.headers.get("content-type", "")
     assert "renderGroundedText" in response.text
     assert "highlightEvidenceItem" in response.text
+    assert "document.createTextNode" in response.text
+    assert "innerHTML" not in response.text
+    assert "aria-controls" in response.text
 
 
 def test_ui_static_missing_file_returns_404():

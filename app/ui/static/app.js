@@ -1,6 +1,6 @@
 /**
  * KnowledgeFlow RAG — Frontend Application Logic
- * Security: Strict DOM node creation without innerHTML for untrusted LLM outputs.
+ * Security: Strict DOM node creation; untrusted LLM output is never parsed as HTML.
  */
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -28,6 +28,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const traceSourcesCount = document.getElementById("trace-sources-count");
   const traceCitationsCount = document.getElementById("trace-citations-count");
   const traceGroundedState = document.getElementById("trace-grounded-state");
+  const traceStampState = document.getElementById("trace-stamp-state");
 
   const techTableBody = document.getElementById("tech-table-body");
   const techJsonContent = document.getElementById("tech-json-content");
@@ -42,7 +43,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const scopeRadios = document.querySelectorAll('input[name="source_scope"]');
 
   let lastPayload = null;
-  let activeHighlightTimeout = null;
+  const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
 
   // Initialize Reference Query Buttons
   referenceButtons.forEach((btn) => {
@@ -50,6 +51,12 @@ document.addEventListener("DOMContentLoaded", () => {
       const queryText = btn.getAttribute("data-query");
       if (queryText) {
         queryInput.value = queryText;
+        const suggestedScope = btn.getAttribute("data-scope");
+        const matchingScope = Array.from(scopeRadios).find((radio) => radio.value === suggestedScope);
+        if (matchingScope) {
+          matchingScope.checked = true;
+          matchingScope.dispatchEvent(new Event("change", { bubbles: true }));
+        }
         queryInput.focus();
       }
     });
@@ -111,9 +118,7 @@ document.addEventListener("DOMContentLoaded", () => {
     hideError();
     showLoading(true);
     resultsArea.classList.add("hidden");
-    if (pipelineGuide) {
-      pipelineGuide.classList.add("hidden");
-    }
+    if (pipelineGuide) pipelineGuide.classList.add("is-processing");
 
     try {
       const response = await fetch("/api/query", {
@@ -126,22 +131,14 @@ document.addEventListener("DOMContentLoaded", () => {
       });
 
       if (!response.ok) {
-        let errDetail = "No fue posible procesar la consulta.";
-        try {
-          const errData = await response.json();
-          if (errData && errData.detail) {
-            errDetail = typeof errData.detail === "string" ? errData.detail : JSON.stringify(errData.detail);
-          }
-        } catch (_) {
-          // Fallback to status text
-        }
-
         if (response.status === 422) {
           showError("Consulta inválida", "La consulta no cumple los requisitos esperados.", 422);
         } else if (response.status === 503) {
           showError("Índice no disponible", "El índice documental no está listo o se encuentra desactualizado (503).", 503);
+        } else if (response.status === 500) {
+          showError("Error de procesamiento", "El motor no pudo completar la consulta (500). Revisa el servicio antes de reintentar.", 500);
         } else {
-          showError("Error de procesamiento", errDetail || `El servidor retornó estado HTTP ${response.status}.`, response.status);
+          showError("Error de procesamiento", `El servidor retornó estado HTTP ${response.status}.`, response.status);
         }
         return;
       }
@@ -161,7 +158,7 @@ document.addEventListener("DOMContentLoaded", () => {
   function renderResults(data) {
     // 1. Traceability Strip & Header Meta
     const isAbstained = Boolean(data.abstained);
-    const scopeUsed = (data.source_scope || "ALL").toUpperCase();
+    const scopeUsed = formatScope(data.source_scope);
     const citations = Array.isArray(data.citations) ? data.citations : [];
     const sources = Array.isArray(data.sources) ? data.sources : [];
 
@@ -178,16 +175,18 @@ document.addEventListener("DOMContentLoaded", () => {
 
       traceGroundedState.textContent = "EVIDENCIA INSUFICIENTE";
       traceGroundedState.className = "trace-value state-abstain";
+      traceStampState.textContent = "ABSTAINED";
 
       answerContent.classList.add("hidden");
       abstentionBox.classList.remove("hidden");
     } else {
-      answerHeading.textContent = "Respuesta Fundamentada";
+      answerHeading.textContent = "Respuesta fundamentada";
       groundingStatusPill.textContent = "FUNDAMENTADA";
       groundingStatusPill.className = "status-pill status-grounded";
 
       traceGroundedState.textContent = "FUNDAMENTADA";
       traceGroundedState.className = "trace-value state-grounded";
+      traceStampState.textContent = "VERIFIED";
 
       abstentionBox.classList.add("hidden");
       answerContent.classList.remove("hidden");
@@ -204,7 +203,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Show Results
     resultsArea.classList.remove("hidden");
-    resultsArea.scrollIntoView({ behavior: "smooth", block: "start" });
+    if (pipelineGuide) pipelineGuide.classList.add("hidden");
+    safeScrollIntoView(resultsArea, "start");
   }
 
   /**
@@ -216,13 +216,14 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Regular expression matching [S1], [S2], etc.
     const citationRegex = /(\[S\d+\])/g;
+    const allowedCitations = new Set(citations.map((citation) => String(citation).replace(/^\[|\]$/g, "")));
     const parts = text.split(citationRegex);
 
     parts.forEach((part) => {
       if (!part) return;
 
       const match = part.match(/^\[(S\d+)\]$/);
-      if (match) {
+      if (match && allowedCitations.has(match[1])) {
         const sourceId = match[1];
         const badge = document.createElement("button");
         badge.type = "button";
@@ -230,6 +231,9 @@ document.addEventListener("DOMContentLoaded", () => {
         badge.textContent = `[${sourceId}]`;
         badge.setAttribute("aria-label", `Ver fuente ${sourceId}`);
         badge.setAttribute("title", `Ir a fuente ${sourceId} en la evidencia`);
+        badge.setAttribute("aria-controls", `evidence-item-${sourceId}`);
+        badge.setAttribute("aria-pressed", "false");
+        badge.dataset.sourceId = sourceId;
 
         badge.addEventListener("click", () => {
           highlightEvidenceItem(sourceId);
@@ -262,6 +266,9 @@ document.addEventListener("DOMContentLoaded", () => {
       item.className = "evidence-item";
       item.id = `evidence-item-${source.id}`;
       item.setAttribute("role", "listitem");
+      item.setAttribute("tabindex", "-1");
+      item.setAttribute("aria-label", `Fuente ${source.id}: ${source.file_name || "documento desconocido"}`);
+      item.dataset.sourceType = source.source_type || "unknown";
 
       // Top Row: Source ID Badge + Provenance Badge
       const topRow = document.createElement("div");
@@ -322,16 +329,16 @@ document.addEventListener("DOMContentLoaded", () => {
       el.classList.remove("highlighted");
     });
 
-    if (activeHighlightTimeout) {
-      clearTimeout(activeHighlightTimeout);
-    }
+    document.querySelectorAll(".citation-badge[aria-pressed='true']").forEach((badge) => {
+      badge.setAttribute("aria-pressed", "false");
+    });
 
     targetElement.classList.add("highlighted");
-    targetElement.scrollIntoView({ behavior: "smooth", block: "nearest" });
-
-    activeHighlightTimeout = setTimeout(() => {
-      targetElement.classList.remove("highlighted");
-    }, 2500);
+    document.querySelectorAll(`.citation-badge[data-source-id="${sourceId}"]`).forEach((badge) => {
+      badge.setAttribute("aria-pressed", "true");
+    });
+    safeScrollIntoView(targetElement, "nearest");
+    targetElement.focus({ preventScroll: true });
   }
 
   /**
@@ -347,6 +354,13 @@ document.addEventListener("DOMContentLoaded", () => {
       { key: "citations_list", val: JSON.stringify(data.citations || []) },
       { key: "sources_count", val: String((data.sources || []).length) },
     ];
+
+    (data.sources || []).forEach((source) => {
+      rows.push({
+        key: `source.${source.id}`,
+        val: `${source.source_type || "unknown"} · ${source.file_name || "documento_desconocido"} · chunk ${source.chunk_index ?? "—"} · score ${typeof source.score === "number" ? source.score.toFixed(3) : "—"}`,
+      });
+    });
 
     rows.forEach(({ key, val }) => {
       const tr = document.createElement("tr");
@@ -376,6 +390,7 @@ document.addEventListener("DOMContentLoaded", () => {
     } else {
       loadingState.classList.add("hidden");
       submitBtn.disabled = false;
+      if (pipelineGuide) pipelineGuide.classList.remove("is-processing");
     }
   }
 
@@ -388,11 +403,28 @@ document.addEventListener("DOMContentLoaded", () => {
     errorState.classList.remove("hidden");
     if (pipelineGuide) {
       pipelineGuide.classList.remove("hidden");
+      pipelineGuide.classList.remove("is-processing");
     }
-    errorState.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    safeScrollIntoView(errorState, "nearest");
   }
 
   function hideError() {
     errorState.classList.add("hidden");
+  }
+
+  function formatScope(scope) {
+    const scopeLabels = {
+      internal: "INT",
+      external: "EXT",
+      all: "INT + EXT",
+    };
+    return scopeLabels[String(scope || "all").toLowerCase()] || String(scope).toUpperCase();
+  }
+
+  function safeScrollIntoView(element, block) {
+    element.scrollIntoView({
+      behavior: prefersReducedMotion.matches ? "auto" : "smooth",
+      block,
+    });
   }
 });
