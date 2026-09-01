@@ -96,7 +96,7 @@
       ],
       "expected_behavior": "grounded_answer",
       "notes": "Estándar externo: TLS 1.3 en tránsito y AES-256 en reposo.",
-      "human_reviewed": false
+      "human_reviewed": true
     },
     {
       "id": "EVAL-007",
@@ -112,7 +112,7 @@
       ],
       "expected_behavior": "grounded_answer",
       "notes": "Referencia de seguridad: validar y sanitizar prompts de entrada y filtrar PII.",
-      "human_reviewed": false
+      "human_reviewed": true
     },
     {
       "id": "EVAL-008",
@@ -128,7 +128,7 @@
       ],
       "expected_behavior": "grounded_answer",
       "notes": "Guía externa: no almacenar secretos en código fuente, usar variables de entorno y .env.example.",
-      "human_reviewed": false
+      "human_reviewed": true
     },
     {
       "id": "EVAL-009",
@@ -144,7 +144,7 @@
       ],
       "expected_behavior": "grounded_answer",
       "notes": "Guía externa: priorizar pruebas unitarias rápidas y deterministas sobre servicios externos.",
-      "human_reviewed": false
+      "human_reviewed": true
     },
     {
       "id": "EVAL-010",
@@ -160,7 +160,7 @@
       ],
       "expected_behavior": "grounded_answer",
       "notes": "Referencia de seguridad: recolectar solo datos necesarios y aplicar políticas de expiración y purga.",
-      "human_reviewed": false
+      "human_reviewed": true
     },
     {
       "id": "EVAL-011",
