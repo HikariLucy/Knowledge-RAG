@@ -33,9 +33,9 @@ Se ejecutó el barrido paramétrico sobre el dataset verificado ([`../../evaluat
 
 - **Estado Actual**: `PENDING / BLOCKED BY EXTERNAL API QUOTA`.
 - **Detalle de la Restricción y Desacoplamiento**:
-  - Google Gemini Free Tier impone una cuota diaria de **20 Requests Per Day (RPD)** por proyecto y por modelo (`GenerateRequestsPerDayPerProjectPerModel-FreeTier`) en `gemini-3.5-flash`.
+  - Durante las corridas live se observó un límite Free Tier de **20 Requests Per Day (RPD)** para `gemini-3.5-flash` (`quotaId: GenerateRequestsPerDayPerProjectPerModel-FreeTier`).
   - La arquitectura desacoplada distribuye las llamadas entre modelos independientes:
-    - **Source Router (`gemini-3.5-flash-lite`)**: Requiere $\approx 20$ llamadas de clasificación (cuenta con su propio cupo RPD).
+    - **Source Router (`gemini-3.5-flash-lite`)**: Requiere $\approx 20$ llamadas de clasificación y operó durante el threshold sweep sin bloqueo de cuota observado.
     - **Generador Grounded (`gemini-3.5-flash`)**: Requiere $\approx 15$ llamadas de síntesis para los casos respondibles, más posibles llamadas de reparación de citas.
   - Al ejecutar el runner oficial sobre los 20 casos completos, la API retornó `429 RESOURCE_EXHAUSTED` al agotarse el cupo diario del modelo generativo.
 - **Integridad de Evidencia**: No se fabricaron ni extrapolaron métricas generativas sintéticas para simular la corrida oficial. El runner y los artefactos de logging están preparados para ejecutarse en cuanto se disponga de cuota o clave con facturación habilitada.
@@ -44,10 +44,10 @@ Se ejecutó el barrido paramétrico sobre el dataset verificado ([`../../evaluat
 
 ## 3. Evidencia de la Suite de Pruebas Automatizadas (Tests)
 
-La suite cuenta con **156 pruebas unitarias e integración** ejecutadas de manera $100\%$ offline:
+La suite cuenta con **158 pruebas unitarias e integración** ejecutadas de manera $100\%$ offline:
 
 ```text
-======================= 156 passed, 3 warnings in 3.13s =======================
+======================= 158 passed, 3 warnings in 3.23s =======================
 ```
 
 ### 3.1. Cobertura de Componentes Críticos del Pipeline

@@ -90,8 +90,8 @@
 ### Diapositiva 8: Limitaciones de Cuota, Lecciones y Cierre (IE8 — 10%, IE9 — 10%)
 - **Duración sugerida**: 1:00 min
 - **Contenido Clave**:
-  - Restricciones reales de cuota Free Tier (20 RPD por modelo) y estrategia de mitigación mediante desacoplamiento.
-  - Suite de 156 pruebas offline automatizadas y harness de preview aislado.
+  - Restricción de cuota observada durante la evaluación: 20 RPD Free Tier para `gemini-3.5-flash` (`GenerateRequestsPerDayPerProjectPerModel-FreeTier`), mitigada en enrutamiento desacoplando a `gemini-3.5-flash-lite`.
+  - Suite de 158 pruebas offline automatizadas y harness de preview aislado.
   - Síntesis de aprendizajes en arquitectura RAG de nivel empresarial.
 - **Apoyo al Orador**:
   > [REQUIERE EXPLICACIÓN DEL EQUIPO: Conclusiones finales, reflexiones del equipo y sesión de preguntas.]

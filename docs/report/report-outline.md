@@ -94,8 +94,8 @@ Presentar los resultados empíricos del barrido de umbrales, la calibración de 
 ### 5.2. Evidencias Técnicas Disponibles
 - **Barrido Paramétrico (Threshold Sweep)**: Resultados con $Top\text{-}K=4$ sobre 20 casos revisados humanamente (0.60 seleccionado como el menor umbral evaluado que retiene 100% de casos válidos con 0% de fuga OOD).
 - **Validación de Citas y Coherencia**: Sistema de citas obligatorias `[S#]` y reparación controlada ante citas fantasma.
-- **Estado de Evaluación Live**: Reporte de estado `PENDING` por cuota diaria en Free Tier (20 RPD en `gemini-3.5-flash`), documentando la restricción sin inventar métricas sintéticas.
-- **Suite de Pruebas**: 156 tests automatizados ejecutados 100% offline.
+- **Estado de Evaluación Live**: Reporte de estado `PENDING` por límite Free Tier de 20 RPD observado en `gemini-3.5-flash` (`quotaId: GenerateRequestsPerDayPerProjectPerModel-FreeTier`), documentando la restricción sin inventar métricas sintéticas.
+- **Suite de Pruebas**: 158 tests automatizados ejecutados 100% offline.
 
 ### 5.3. Tablas y Figuras Sugeridas
 - Tabla de resultados del Threshold Sweep ([`../evidence/evaluation-evidence.md`](../evidence/evaluation-evidence.md#12-tabla-de-resultados-empíricos-del-barrido)).
